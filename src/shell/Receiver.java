@@ -139,6 +139,7 @@ public class Receiver { // used for collection management and command execution
                 command.getFirst().execute(this, Arrays.asList(command.getSecond()));
             } catch (Exception e) {
                 System.out.println(e.getMessage());
+                break;
             }
         }
         scriptParser = null;
