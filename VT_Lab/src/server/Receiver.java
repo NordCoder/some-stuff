@@ -3,26 +3,25 @@ package server;
 import common.commands.Command;
 import common.entity.Person;
 import common.entity.Worker;
-import common.input.ConsoleInputGetter;
 import common.input.FileInputGetter;
 import common.input.InputParser;
 import common.util.CustomPair;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
-import static common.util.Util.getClientCommands;
+import static common.util.Util.*;
 import static server.Saving.saveToJsonStatic;
-import static common.util.Util.getServerCommands;
+
+// treeset comparing value is id, worker comparator is also id-based
+// but to compare workers for commands function countToCompare is used
+
+// todo fix execute script
 
 public class Receiver { // used for collection management and command execution
     private TreeSet<Worker> collection;
     private ZonedDateTime creationDate;
-
-    public void setCommandsHistory(ArrayList<Command> commandsHistory) {
-        this.commandsHistory = commandsHistory;
-    }
-
     private ArrayList<Command> commandsHistory;
     private InputParser scriptParser = null;
 
@@ -30,28 +29,6 @@ public class Receiver { // used for collection management and command execution
         this.collection = new TreeSet<>(Comparator.comparingDouble(Worker::getId));
         this.commandsHistory = new ArrayList<>();
         creationDate = ZonedDateTime.now();
-    }
-
-    public Worker readWorker() {
-        try {
-            if (scriptParser != null) {
-                return scriptParser.readWorker();
-            }
-            return new InputParser(new ConsoleInputGetter(), getClientCommands()).readWorker();  // never throws
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public Person readPerson() {
-        try {
-            if (scriptParser != null) {
-                return scriptParser.readPerson();
-            }
-            return new InputParser(new ConsoleInputGetter(), getClientCommands()).readPerson();  // never throws
-        } catch (Exception e) {
-            return null;
-        }
     }
 
     public boolean addWorker(Worker worker) {
@@ -63,11 +40,13 @@ public class Receiver { // used for collection management and command execution
     }
 
     public double getMaximumValue() {
-        return getExtremeValue(true);
+        Optional<Worker> maxWorker = collection.stream().max(Comparator.comparingDouble(Worker::getId));
+        return maxWorker.map(Worker::countToCompare).orElse(Double.MIN_VALUE);
     }
 
     public double getMinimumValue() {
-        return getExtremeValue(false);
+        Optional<Worker> minWorker = collection.stream().min(Comparator.comparingDouble(Worker::getId));
+        return minWorker.map(Worker::countToCompare).orElse(Double.MAX_VALUE);
     }
 
     public TreeSet<Worker> getCollection() {
@@ -83,76 +62,79 @@ public class Receiver { // used for collection management and command execution
     }
 
     public String getHistory() {
-        int counter = 0;
-        StringBuilder sb = new StringBuilder();
-        for (Command command : commandsHistory) {
-            sb.append(command.getHelpName()).append(System.lineSeparator());
-            counter++;
-            if (counter == 15) {
-                break;
-            }
-        }
-        return sb.toString();
+        return commandsHistory.stream()
+                .limit(14)
+                .map(Command::getHelpName)
+                .collect(Collectors.joining(System.lineSeparator()));
     }
 
     public String getAscending() {
-        Comparator<Worker> countBasedComparator = Comparator.comparingDouble(Worker::countToCompare);
-        StringBuilder sb = new StringBuilder();
-        for (Worker w : collection.stream().sorted(countBasedComparator).toList()) {
-            sb.append(w).append(System.lineSeparator());
-        }
-        return sb.toString();
+        return collection
+                .stream()
+                .sorted(Comparator.comparingDouble(Worker::countToCompare))
+                .map(Worker::toString)
+                .collect(Collectors.joining(System.lineSeparator()));
+    }
+
+    public String show() {
+        return collection
+                .stream()
+                .sorted(Comparator.comparingDouble(Worker::getCoordinatesCompareValue))
+                .map(Worker::toString)
+                .collect(Collectors.joining(System.lineSeparator()));
+
     }
 
     public String getInfo() {
-        return "type: " + collection.getClass().getName() +
-                "size: " + collection.size() +
-                "creation date: " + creationDate;
+        return "type: " + collection.getClass().getName() + System.lineSeparator() +
+                "size: " + collection.size() + System.lineSeparator() +
+                "creation date: " + creationDate + System.lineSeparator();
     }
 
     public String getFieldAscendingPerson() {
-        Comparator<Worker> personBasedComparator = Comparator.comparingDouble(Worker::getPersonCompareValue);
-        StringBuilder sb = new StringBuilder();
-        for (Worker w : collection.stream().sorted(personBasedComparator).toList()) {
-            sb.append(w.getPerson()).append(System.lineSeparator());
-        }
-        return sb.toString();
+        return collection.stream()
+                .sorted(Comparator.comparingDouble(Worker::getPersonCompareValue))
+                .map(worker -> worker.getPerson().toString())
+                .collect(Collectors.joining(System.lineSeparator()));
     }
 
-    public void removeAnyByPerson(Person person) {
+    public boolean removeAnyByPerson(Person person) {
         for (Worker w : collection) {
             if (w.getPerson().compareTo(person) == 0) {
                 collection.remove(w);
-                return;
+                return true;
             }
         }
+        return false;
     }
 
-    public void removeWorkerById(long id) {
-        for (Worker w : collection) {
-            if (w.getId() == id) {
-                collection.remove(w);
-                return;
-            }
-        }
+    public boolean removeWorkerById(long id) {
+        long size = collection.size();
+        collection = collection
+                .stream()
+                .filter(worker -> worker.getId() != id)
+                .collect(Collectors.toCollection(TreeSet::new));
+        return size != collection.size();
     }
 
-    public void saveToJson() {
-        saveToJsonStatic(this);
+    public boolean saveToJson() {
+        return saveToJsonStatic(this);
     }
 
-    public void executeScript(String filePath) {
+    public boolean executeScript(String filePath) {
         scriptParser = new InputParser(new FileInputGetter(filePath), getClientCommands());
         while (scriptParser.hasNextLine()) {
             try {
                 CustomPair<Command, String[]> command = scriptParser.nextCommand();
+                handleCommandsWithAdditionalInfo(command.getFirst(), scriptParser);
                 command.getFirst().execute(this, Arrays.asList(command.getSecond()));
             } catch (Exception e) {
                 System.out.println(e.getMessage());
-                break;
+                return false;
             }
         }
         scriptParser = null;
+        return true;
     }
 
     public void replaceWorkerById(long id, Worker toAdd) {
@@ -162,29 +144,15 @@ public class Receiver { // used for collection management and command execution
     }
 
     public String getHelp() {
-        Map<String, Command> allCommands = getServerCommands();
-        StringBuilder sb = new StringBuilder();
-        for (Command command : allCommands.values()) {
-            sb.append(command.getHelpName()).append(": ").append(command.getHelpText()).append(System.lineSeparator());
-        }
-        return sb.toString();
+        return getClientCommands()
+                .values()
+                .stream()
+                .map(command -> (command.getHelpName() + ": " + command.getHelpText()))
+                .collect(Collectors.joining(System.lineSeparator()));
     }
 
     private long generateId() {
         return System.currentTimeMillis();
-    }
-
-    private double getExtremeValue(boolean flag) {
-        double extreme = flag ? Double.MIN_VALUE : Double.MAX_VALUE;
-        if (collection.isEmpty())
-            return extreme;
-        for (Worker w : collection) {
-            double cur = w.countToCompare();
-            if (flag ? (cur > extreme) : (cur < extreme)) {
-                extreme = cur;
-            }
-        }
-        return extreme;
     }
 
     public void setCreationDate(ZonedDateTime creationDate) {

@@ -10,11 +10,12 @@ public class AddIfMin implements SpecialCommand {
     private Worker worker = null;
     @Override
     public Response execute(Receiver receiver, List<String> args) {
+        receiver.addCommandHistoryRecord(this);
         if (worker.countToCompare() < receiver.getMinimumValue()) {
             receiver.addWorker(worker);
+            return new Response("done");
         }
-        receiver.addCommandHistoryRecord(this);
-        return new Response("done");
+        return new Response("too big");
     }
 
 

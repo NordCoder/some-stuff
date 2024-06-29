@@ -36,11 +36,17 @@ public class Client {
 
     public static void runMainLoop() {
         inputParser = new InputParser(new ConsoleInputGetter(), getClientCommands());
+        long timer;
         while (true) {
             System.out.print(">>>");
             try {
                sendNextCommand();
+               timer = System.currentTimeMillis();
                 while (true) {
+                    if (System.currentTimeMillis() - timer > 10000) {
+                        System.out.println("Server's unreachable. Try again later.");
+                        break;
+                    }
                     InetSocketAddress responseAddress = (InetSocketAddress) channel.receive(buffer);
                     if (responseAddress != null) {
                         buffer.flip();
@@ -67,7 +73,7 @@ public class Client {
 
     private static void sendNextCommand() throws Exception {
         CustomPair<Command, String[]> command = inputParser.nextCommand();
-        handleCommandsWithAdditionalInfo(command.getFirst());
+        handleCommandsWithAdditionalInfo(command.getFirst(), new InputParser(new ConsoleInputGetter(), getClientCommands()));
         buffer.put(commandSerializer.serialize(command));
         buffer.flip();
         channel.send(buffer, address);

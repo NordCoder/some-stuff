@@ -31,7 +31,7 @@ public class Saving {
         }
     }
 
-    public static void saveToJsonStatic(Receiver receiver) {
+    public static boolean saveToJsonStatic(Receiver receiver) {
         toSave toSave = new toSave(receiver.getCreationDate(), receiver.getCollection(), receiver.getCommandsHistory());
         Gson gson = new GsonBuilder()
                 .registerTypeAdapter(ZonedDateTime.class, new ZonedDateTimeConverter())
@@ -41,8 +41,10 @@ public class Saving {
 
         try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream("data.json"), StandardCharsets.UTF_8)) {
             writer.write(converted);
+            return true;
         } catch (IOException e) {
             System.out.println(e.getMessage());;
+            return false;
         }
     }
 

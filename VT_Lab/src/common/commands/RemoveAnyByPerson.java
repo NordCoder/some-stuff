@@ -10,9 +10,9 @@ public class RemoveAnyByPerson implements SpecialCommand {
     private Person person;
     @Override
     public Response execute(Receiver receiver, List<String> args) {
-        receiver.removeAnyByPerson(person);
+        boolean check = receiver.removeAnyByPerson(person);
         receiver.addCommandHistoryRecord(this);
-        return new Response("done");
+        return new Response(check ? "done" : "there's no worker with such person");
     }
 
 

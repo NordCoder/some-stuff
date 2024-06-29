@@ -7,9 +7,9 @@ import java.util.List;
 public class Save implements Command{
     @Override
     public Response execute(Receiver receiver, List<String> args) {
-        receiver.saveToJson();
+        boolean check = receiver.saveToJson();
         receiver.addCommandHistoryRecord(this);
-        return new Response("saved!");
+        return new Response(check ? "saved!" : "not saved :(");
     }
 
     @Override

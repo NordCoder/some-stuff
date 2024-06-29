@@ -48,6 +48,10 @@ public class Worker implements Comparable<Worker>, Serializable {
         return person.count_to_compare();
     }
 
+    public double getCoordinatesCompareValue() {
+        return coordinates.count_to_compare();
+    }
+
     public void setId(Long id) {
         this.id = id;
     }

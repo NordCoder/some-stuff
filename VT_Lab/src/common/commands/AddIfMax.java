@@ -10,11 +10,12 @@ public class AddIfMax implements SpecialCommand {
     private Worker worker;
     @Override
     public Response execute(Receiver receiver, List<String> args) {
+        receiver.addCommandHistoryRecord(this);
         if (worker.countToCompare() > receiver.getMaximumValue()) {
             receiver.addWorker(worker);
+            return new Response("done");
         }
-        receiver.addCommandHistoryRecord(this);
-        return new Response("done");
+        return new Response("too small :(");
     }
 
 
