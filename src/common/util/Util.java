@@ -36,12 +36,12 @@ public class Util {
     }
 
 
-    public static void handleCommandsWithAdditionalInfo(Command command) throws Exception {
+    public static void handleCommandsWithAdditionalInfo(Command command, InputParser parser) throws Exception {
         if (command instanceof SpecialCommand) {
             if (((SpecialCommand) command).needsWorker()) {
-                ((SpecialCommand) command).setToAdd(new InputParser(new ConsoleInputGetter(), getClientCommands()).readWorker());
+                ((SpecialCommand) command).setToAdd(parser.readWorker());
             } else {
-                ((SpecialCommand) command).setToAdd(new InputParser(new ConsoleInputGetter(), getClientCommands()).readPerson());
+                ((SpecialCommand) command).setToAdd(parser.readPerson());
             }
         }
     }

@@ -7,7 +7,7 @@ import java.util.List;
 public class Show implements Command{
     @Override
     public Response execute(Receiver receiver, List<String> args) {
-        String workers = receiver.getAscending();
+        String workers = receiver.show();
         receiver.addCommandHistoryRecord(this);
         return new Response(workers);
     }

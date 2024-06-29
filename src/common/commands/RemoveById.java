@@ -9,9 +9,9 @@ public class RemoveById implements Command {
     public Response execute(Receiver receiver, List<String> args) {
         try {
             long id = Long.parseLong(args.get(0));
-            receiver.removeWorkerById(id);
+            boolean check = receiver.removeWorkerById(id);
             receiver.addCommandHistoryRecord(this);
-            return new Response("done!");
+            return new Response(check ? "done!" : "there's no worker with id " + id);
         } catch (Exception e) {
             return new Response("id must be a number");
         }

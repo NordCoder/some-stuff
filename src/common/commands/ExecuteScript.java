@@ -7,9 +7,9 @@ import java.util.List;
 public class ExecuteScript implements Command {
     @Override
     public Response execute(Receiver receiver, List<String> args) {
-        receiver.executeScript(args.get(0));
+        boolean check = receiver.executeScript(args.get(0));
         receiver.addCommandHistoryRecord(this);
-        return new Response("Executed!");
+        return new Response(check ? "Executed!" : "bad script");
     }
 
     @Override
@@ -21,5 +21,4 @@ public class ExecuteScript implements Command {
     public String getHelpName() {
         return "execute_script file_name";
     }
-
 }
