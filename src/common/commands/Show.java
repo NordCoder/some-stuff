@@ -6,9 +6,9 @@ import java.util.List;
 
 public class Show implements Command{
     @Override
-    public Response execute(Receiver receiver, List<String> args) {
-        String workers = receiver.show();
-        receiver.addCommandHistoryRecord(this);
+    public Response execute(Request request) {
+        String workers = request.getReceiver().show();
+        request.getReceiver().addCommandHistoryRecord(this);
         return new Response(workers);
     }
 

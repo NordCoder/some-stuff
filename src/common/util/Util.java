@@ -1,10 +1,13 @@
 package common.util;
 
 import common.commands.*;
-import common.input.ConsoleInputGetter;
 import common.input.InputParser;
 
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Util {
@@ -25,6 +28,7 @@ public class Util {
         commands.put("remove_any_by_person", new RemoveAnyByPerson());
         commands.put("print_ascending", new PrintAscending());
         commands.put("print_field_ascending_person", new PrintFieldAscendingPerson());
+        commands.put("register", new Register());
         return commands;
     }
 
@@ -36,13 +40,34 @@ public class Util {
     }
 
 
-    public static void handleCommandsWithAdditionalInfo(Command command, InputParser parser) throws Exception {
-        if (command instanceof SpecialCommand) {
+    public static void handleCommandsWithAdditionalInfo(CustomPair<Command, Request> command, InputParser parser) throws Exception {
+        if (command.getFirst() instanceof SpecialCommand) {
             if (((SpecialCommand) command).needsWorker()) {
                 ((SpecialCommand) command).setToAdd(parser.readWorker());
             } else {
                 ((SpecialCommand) command).setToAdd(parser.readPerson());
             }
+        } else if (command.getFirst() instanceof Register) {
+            command.getSecond().setArgs(parser.readUsernamePassword());
+        } else if (command.getFirst() instanceof Login) {
+            List<String> userPassword = parser.readUsernamePassword();
+            AccountCard.setUsername(userPassword.get(0));
+            command.getSecond().setArgs(userPassword);
+        }
+    }
+
+    public static String generateSHA512Hash(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
+            byte[] hashBytes = md.digest(input.getBytes());
+            BigInteger number = new BigInteger(1, hashBytes);
+            StringBuilder hexString = new StringBuilder(number.toString(16));
+            while (hexString.length() < 128) {
+                hexString.insert(0, '0');
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
         }
     }
 

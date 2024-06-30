@@ -1,6 +1,7 @@
 package server;
 
 import common.commands.Command;
+import common.commands.Request;
 import common.commands.Response;
 import common.util.CustomPair;
 import common.util.Serializer;
@@ -15,12 +16,13 @@ import static server.Server.getBuffer;
 import static server.Server.getReceiver;
 
 public class QueryHandler {
-    private static Serializer<CustomPair<Command, String[]>> commandSerializer = new Serializer<>();
+    private static Serializer<CustomPair<Command, Request>> commandSerializer = new Serializer<>();
 
     public static Response executeCommandFromBuffer() throws IOException, ClassNotFoundException {
         getBuffer().flip();
-        CustomPair<Command, String[]> command = commandSerializer.deserialize(getBuffer().array());
-        Response response = command.getFirst().execute(getReceiver(), Arrays.asList(command.getSecond()));
+        CustomPair<Command, Request> command = commandSerializer.deserialize(getBuffer().array());
+        command.getSecond().setReceiver(getReceiver());
+        Response response = command.getFirst().execute(command.getSecond());
         System.out.println("executed command: " + command.getFirst());
         getBuffer().clear();
         return response;

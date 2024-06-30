@@ -9,9 +9,9 @@ import java.util.List;
 public class Add implements SpecialCommand {
     private Worker worker = null;
     @Override
-    public Response execute(Receiver receiver, List<String> args) {
-        boolean check = receiver.addWorker(worker);
-        receiver.addCommandHistoryRecord(this);
+    public Response execute(Request request) {
+        boolean check = request.getReceiver().addWorker(worker);
+        request.getReceiver().addCommandHistoryRecord(this);
         return new Response(check ? "done" : "already contains");
     }
 

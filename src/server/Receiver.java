@@ -1,6 +1,7 @@
 package server;
 
 import common.commands.Command;
+import common.commands.Request;
 import common.entity.Person;
 import common.entity.Worker;
 import common.input.FileInputGetter;
@@ -125,9 +126,10 @@ public class Receiver { // used for collection management and command execution
         scriptParser = new InputParser(new FileInputGetter(filePath), getClientCommands());
         while (scriptParser.hasNextLine()) {
             try {
-                CustomPair<Command, String[]> command = scriptParser.nextCommand();
-                handleCommandsWithAdditionalInfo(command.getFirst(), scriptParser);
-                command.getFirst().execute(this, Arrays.asList(command.getSecond()));
+                CustomPair<Command, Request> command = scriptParser.nextCommand();
+                handleCommandsWithAdditionalInfo(command, scriptParser);
+                command.getSecond().setReceiver(this);
+                command.getFirst().execute(command.getSecond());
             } catch (Exception e) {
                 System.out.println(e.getMessage());
                 return false;

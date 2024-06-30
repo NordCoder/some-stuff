@@ -22,4 +22,12 @@ public class Coordinates implements Serializable {
                 ", y=" + y +
                 '}';
     }
+
+    public Double getX() {
+        return x;
+    }
+
+    public Long getY() {
+        return y;
+    }
 }

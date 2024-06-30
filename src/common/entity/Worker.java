@@ -82,6 +82,33 @@ public class Worker implements Comparable<Worker>, Serializable {
     }
 
 
+    public String getName() {
+        return name;
+    }
+
+    public Coordinates getCoordinates() {
+        return coordinates;
+    }
+
+    public LocalDateTime getCreationDate() {
+        return creationDate;
+    }
+
+    public double getSalary() {
+        return salary;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public Position getPosition() {
+        return position;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
 }
 
 

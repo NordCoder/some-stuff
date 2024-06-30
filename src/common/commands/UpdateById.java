@@ -9,11 +9,11 @@ import java.util.List;
 public class UpdateById implements SpecialCommand {
     private Worker worker;
     @Override
-    public Response execute(Receiver receiver, List<String> args) {
+    public Response execute(Request request) {
         try {
-            long id = Long.parseLong(args.get(0));
-            receiver.replaceWorkerById(id, worker);
-            receiver.addCommandHistoryRecord(this);
+            long id = Long.parseLong(request.getArgs().get(0));
+            request.getReceiver().replaceWorkerById(id, worker);
+            request.getReceiver().addCommandHistoryRecord(this);
             return new Response("done");
         } catch (Exception e) {
             return new Response("id must be a number");

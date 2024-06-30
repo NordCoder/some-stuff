@@ -6,9 +6,9 @@ import java.util.List;
 
 public class ExecuteScript implements Command {
     @Override
-    public Response execute(Receiver receiver, List<String> args) {
-        boolean check = receiver.executeScript(args.get(0));
-        receiver.addCommandHistoryRecord(this);
+    public Response execute(Request request) {
+        boolean check = request.getReceiver().executeScript(request.getArgs().get(0));
+        request.getReceiver().addCommandHistoryRecord(this);
         return new Response(check ? "Executed!" : "bad script");
     }
 

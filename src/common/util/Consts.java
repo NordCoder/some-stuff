@@ -80,5 +80,8 @@ public class Consts {
                 return false;
             }
         };
+
+        public static Predicate<String> longerThanTwo = str -> str.length() > 2;
+        public static Predicate<String> longerThanFive = str -> str.length() > 5;
     }
 }

@@ -6,11 +6,11 @@ import java.util.List;
 
 public class RemoveById implements Command {
     @Override
-    public Response execute(Receiver receiver, List<String> args) {
+    public Response execute(Request request) {
         try {
-            long id = Long.parseLong(args.get(0));
-            boolean check = receiver.removeWorkerById(id);
-            receiver.addCommandHistoryRecord(this);
+            long id = Long.parseLong(request.getArgs().get(0));
+            boolean check = request.getReceiver().removeWorkerById(id);
+            request.getReceiver().addCommandHistoryRecord(this);
             return new Response(check ? "done!" : "there's no worker with id " + id);
         } catch (Exception e) {
             return new Response("id must be a number");

@@ -9,10 +9,10 @@ import java.util.List;
 public class AddIfMin implements SpecialCommand {
     private Worker worker = null;
     @Override
-    public Response execute(Receiver receiver, List<String> args) {
-        receiver.addCommandHistoryRecord(this);
-        if (worker.countToCompare() < receiver.getMinimumValue()) {
-            receiver.addWorker(worker);
+    public Response execute(Request request) {
+        request.getReceiver().addCommandHistoryRecord(this);
+        if (worker.countToCompare() < request.getReceiver().getMinimumValue()) {
+            request.getReceiver().addWorker(worker);
             return new Response("done");
         }
         return new Response("too big");

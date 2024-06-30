@@ -9,9 +9,9 @@ import java.util.TreeSet;
 
 public class Clear implements Command {
     @Override
-    public Response execute(Receiver receiver, List<String> args) {
-        receiver.setCollection(new TreeSet<>(Comparator.comparingDouble(Worker::countToCompare)));
-        receiver.addCommandHistoryRecord(this);
+    public Response execute(Request request) {
+        request.getReceiver().setCollection(new TreeSet<>(Comparator.comparingDouble(Worker::countToCompare)));
+        request.getReceiver().addCommandHistoryRecord(this);
         return new Response("Cleared!");
     }
 

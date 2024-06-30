@@ -1,6 +1,7 @@
 package server;
 
 import common.commands.Command;
+import common.commands.Request;
 import common.commands.Response;
 import common.input.ConsoleInputGetter;
 import common.input.InputParser;
@@ -73,9 +74,10 @@ public class Server {
         while (true) {
             System.out.print(">>>");
             try {
-                CustomPair<Command, String[]> command = commandParser.nextCommand();
-                handleCommandsWithAdditionalInfo(command.getFirst(), new InputParser(new ConsoleInputGetter(), getServerCommands()));
-                Response response = command.getFirst().execute(receiver, Arrays.asList(command.getSecond()));
+                CustomPair<Command, Request> command = commandParser.nextCommand();
+                handleCommandsWithAdditionalInfo(command, new InputParser(new ConsoleInputGetter(), getServerCommands()));
+                command.getSecond().setReceiver(receiver);
+                Response response = command.getFirst().execute(command.getSecond());
                 System.out.println(response.getText());
             } catch (BadInputException e) {
                 System.out.println(e.getMessage());

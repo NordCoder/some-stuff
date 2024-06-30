@@ -6,9 +6,9 @@ import java.util.List;
 
 public class PrintAscending implements Command {
     @Override
-    public Response execute(Receiver receiver, List<String> args) {
-        String workers = receiver.getAscending();
-        receiver.addCommandHistoryRecord(this);
+    public Response execute(Request request) {
+        String workers = request.getReceiver().getAscending();
+        request.getReceiver().addCommandHistoryRecord(this);
         return new Response(workers);
     }
 

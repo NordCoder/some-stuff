@@ -9,10 +9,10 @@ import java.util.List;
 public class AddIfMax implements SpecialCommand {
     private Worker worker;
     @Override
-    public Response execute(Receiver receiver, List<String> args) {
-        receiver.addCommandHistoryRecord(this);
-        if (worker.countToCompare() > receiver.getMaximumValue()) {
-            receiver.addWorker(worker);
+    public Response execute(Request request) {
+        request.getReceiver().addCommandHistoryRecord(this);
+        if (worker.countToCompare() > request.getReceiver().getMaximumValue()) {
+            request.getReceiver().addWorker(worker);
             return new Response("done");
         }
         return new Response("too small :(");
