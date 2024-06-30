@@ -1,6 +1,7 @@
 package common.util;
 
 import common.commands.*;
+import common.input.ConsoleInputGetter;
 import common.input.InputParser;
 
 import java.math.BigInteger;
@@ -42,16 +43,16 @@ public class Util {
 
     public static void handleCommandsWithAdditionalInfo(CustomPair<Command, Request> command, InputParser parser) throws Exception {
         if (command.getFirst() instanceof SpecialCommand) {
-            if (((SpecialCommand) command).needsWorker()) {
-                ((SpecialCommand) command).setToAdd(parser.readWorker());
+            if (((SpecialCommand) command.getFirst()).needsWorker()) {
+                ((SpecialCommand) command.getFirst()).setToAdd(parser.readWorker());
             } else {
-                ((SpecialCommand) command).setToAdd(parser.readPerson());
+                ((SpecialCommand) command.getFirst()).setToAdd(parser.readPerson());
             }
         } else if (command.getFirst() instanceof Register) {
             command.getSecond().setArgs(parser.readUsernamePassword());
         } else if (command.getFirst() instanceof Login) {
             List<String> userPassword = parser.readUsernamePassword();
-            AccountCard.setUsername(userPassword.get(0));
+            command.getSecond().getCard().setUsername(userPassword.get(0));
             command.getSecond().setArgs(userPassword);
         }
     }
@@ -69,6 +70,13 @@ public class Util {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static CustomPair<Command, Request> readHandleCommand(InputParser parser, AccountCard card) throws Exception {
+        CustomPair<Command, List<String>> command = parser.nextCommand();
+        CustomPair<Command, Request> requestedCommand = new CustomPair<>(command.getFirst(), new Request(card, command.getSecond()));
+        handleCommandsWithAdditionalInfo(requestedCommand, new InputParser(new ConsoleInputGetter(), getServerCommands()));
+        return requestedCommand;
     }
 
 }

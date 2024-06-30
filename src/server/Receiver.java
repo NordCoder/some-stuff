@@ -6,6 +6,7 @@ import common.entity.Person;
 import common.entity.Worker;
 import common.input.FileInputGetter;
 import common.input.InputParser;
+import common.util.AccountCard;
 import common.util.CustomPair;
 
 import java.time.ZonedDateTime;
@@ -25,6 +26,7 @@ public class Receiver { // used for collection management and command execution
     private ZonedDateTime creationDate;
     private ArrayList<Command> commandsHistory;
     private InputParser scriptParser = null;
+    private AccountCard accountCard;
 
     public Receiver() {
         this.collection = new TreeSet<>(Comparator.comparingDouble(Worker::getId));
@@ -122,12 +124,11 @@ public class Receiver { // used for collection management and command execution
         return saveToJsonStatic(this);
     }
 
-    public boolean executeScript(String filePath) {
+    public boolean executeScript(String filePath, AccountCard card) {
         scriptParser = new InputParser(new FileInputGetter(filePath), getClientCommands());
         while (scriptParser.hasNextLine()) {
             try {
-                CustomPair<Command, Request> command = scriptParser.nextCommand();
-                handleCommandsWithAdditionalInfo(command, scriptParser);
+                CustomPair<Command, Request> command = readHandleCommand(scriptParser, card);
                 command.getSecond().setReceiver(this);
                 command.getFirst().execute(command.getSecond());
             } catch (Exception e) {

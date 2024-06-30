@@ -1,18 +1,15 @@
 package common.input;
 
 import common.commands.Command;
-import common.commands.Request;
 import common.entity.*;
 import common.util.CustomPair;
 
-import java.lang.reflect.Array;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static client.Client.getAccountCard;
 import static common.util.Consts.Predicates.*;
 
 public class InputParser {
@@ -24,7 +21,7 @@ public class InputParser {
         this.inputGetter = inputGetter;
     }
 
-    public CustomPair<Command, Request> nextCommand() throws Exception {
+    public CustomPair<Command, List<String>> nextCommand() throws Exception {
         String[] command = inputGetter.getNextLine().split("\\s+");
         String commandName = command[0];
         if (commandName.equals("exit")) {
@@ -35,7 +32,7 @@ public class InputParser {
         if (commandObj == null) {
             throw new Exception("There's no command named " + commandName);
         } else {
-            return new CustomPair<>(commandObj, new Request(getAccountCard(), Arrays.stream(args).toList()));
+            return new CustomPair<>(commandObj, Arrays.stream(args).toList());
         }
     }
 

@@ -5,6 +5,7 @@ import common.commands.Request;
 import common.commands.Response;
 import common.input.ConsoleInputGetter;
 import common.input.InputParser;
+import common.util.AccountCard;
 import common.util.BadInputException;
 import common.util.CustomPair;
 
@@ -14,68 +15,69 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.util.Arrays;
+import java.util.List;
 import java.util.NoSuchElementException;
 
-import static common.util.Util.getServerCommands;
-import static common.util.Util.handleCommandsWithAdditionalInfo;
-import static server.QueryHandler.executeCommandFromBuffer;
-import static server.QueryHandler.getClientDataAndFillBuffer;
-import static server.Responder.respondToClient;
+import static common.util.Util.*;
 import static server.Saving.loadFromJson;
 
 public class Server {
-    private static ConnectionManager connectionManager;
-    private static ByteBuffer buffer;
-    private static Receiver receiver;
+    private ConnectionManager connectionManager;
+    private QueryHandler queryHandler;
+    private Responder responder;
 
 
-    private static void init() throws IOException {
-        initCollection();
-        connectionManager = new ConnectionManager();
-        buffer = ByteBuffer.allocate(8192);
-    }
+    private Receiver receiver;
+    private AccountCard card;
 
-    private static void runServer() throws IOException, ClassNotFoundException {
-        while (true) {
-            SelectionKey key = connectionManager.getNextSelectionKey();
-            CustomPair<DatagramChannel, InetSocketAddress> clientData = getClientDataAndFillBuffer(key);
-            Response response = executeCommandFromBuffer();
-            respondToClient(clientData, response);
-        }
-    }
-
-    public static void main(String[] args) {
-
+    public Server() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> receiver.saveToJson()));
 
-        try {
-            init();
-        } catch (IOException e) {
-            System.out.println("unable to start server: " + e.getMessage());
-        }
-
-        new Thread(Server::runServerConsole).start();
-
-        try {
-            runServer();
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println(e.getMessage());
-        }
-
+        init();
+        startSeverConsoleThread();
+        runServer();
     }
 
-    private static void initCollection() {
+    private void init() {
+        initCollection();
+        connectionManager = new ConnectionManager();
+        queryHandler = new QueryHandler(this);
+        responder = new Responder(this);
+    }
+
+    private void runServer() {
+        while (true) {
+            try {
+                SelectionKey key = connectionManager.getNextSelectionKey();
+                CustomPair<DatagramChannel, InetSocketAddress> clientData = queryHandler.getClientDataAndFillBuffer(key);
+                Response response = queryHandler.executeCommandFromBuffer();
+                responder.respondToClient(clientData, response);
+            } catch (IOException | ClassNotFoundException e) {
+                System.out.println("Server error: " + e.getMessage());
+            }
+        }
+    }
+
+    private void initCollection() {
         receiver = new Receiver();
         loadFromJson(receiver);
     }
 
-    private static void runServerConsole() {
+    private void startSeverConsoleThread() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                runServerConsole();
+            }
+        }).start();
+    }
+
+    private void runServerConsole() {
         InputParser commandParser = new InputParser(new ConsoleInputGetter(), getServerCommands());
         while (true) {
             System.out.print(">>>");
             try {
-                CustomPair<Command, Request> command = commandParser.nextCommand();
-                handleCommandsWithAdditionalInfo(command, new InputParser(new ConsoleInputGetter(), getServerCommands()));
+                CustomPair<Command, Request> command = readHandleCommand(commandParser, card);
                 command.getSecond().setReceiver(receiver);
                 Response response = command.getFirst().execute(command.getSecond());
                 System.out.println(response.getText());
@@ -89,11 +91,11 @@ public class Server {
         }
     }
 
-    public static ByteBuffer getBuffer() {
-        return buffer;
+    public ConnectionManager getConnectionManager() {
+        return connectionManager;
     }
 
-    public static Receiver getReceiver() {
+    public Receiver getReceiver() {
         return receiver;
     }
 }

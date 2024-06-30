@@ -8,11 +8,15 @@ import java.nio.channels.DatagramChannel;
 public class ClientConnectionManager {
     private static final String SERVER_ADDRESS = "localhost";
     private static final int SERVER_PORT = 12345;
-    private static DatagramChannel channel;
-    private static InetSocketAddress address;
-    private static ByteBuffer buffer;
+    private DatagramChannel channel;
+    private InetSocketAddress address;
+    private ByteBuffer buffer;
 
-    public static void createConnection() {
+    public ClientConnectionManager(Client client) {
+        createConnection();
+    }
+
+    public void createConnection() {
         try {
             channel = DatagramChannel.open();
             channel.configureBlocking(false);
@@ -23,15 +27,15 @@ public class ClientConnectionManager {
         }
     }
 
-    public static DatagramChannel getChannel() {
+    public DatagramChannel getChannel() {
         return channel;
     }
 
-    public static ByteBuffer getBuffer() {
+    public ByteBuffer getBuffer() {
         return buffer;
     }
 
-    public static InetSocketAddress getAddress() {
+    public InetSocketAddress getAddress() {
         return address;
     }
 }

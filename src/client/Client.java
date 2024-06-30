@@ -5,21 +5,27 @@ import common.util.BadInputException;
 
 import java.util.NoSuchElementException;
 
-import static client.ClientConnectionManager.createConnection;
-import static client.CommandSender.sendNextCommand;
-import static client.ResponseReceiver.getResponse;
-import static client.ResponseReceiver.handleResponse;
-
-
 public class Client {
-    private static AccountCard accountCard = new AccountCard();
+    private AccountCard accountCard;
+    private ClientConnectionManager connectionManager;
+    private CommandSender sender;
+    private ResponseReceiver responseReceiver;
 
-    public static void runMainLoop() {
+    public Client() {
+        this.accountCard = new AccountCard();
+        this.connectionManager = new ClientConnectionManager(this);
+        this.sender = new CommandSender(this);
+        this.responseReceiver = new ResponseReceiver(this);
+
+        runMainLoop();
+    }
+
+    public void runMainLoop() {
         while (true) {
             System.out.print(">>>");
             try {
-                sendNextCommand();
-                handleResponse(getResponse());
+                sender.sendNextCommand();
+                responseReceiver.handleResponse(responseReceiver.getResponse());
             } catch (BadInputException e) {
                 System.out.println(e.getMessage());
             } catch (NoSuchElementException e) {
@@ -30,12 +36,11 @@ public class Client {
         }
     }
 
-    public static void main(String[] args) {
-        createConnection();
-        runMainLoop();
+    public AccountCard getAccountCard() {
+        return accountCard;
     }
 
-    public static AccountCard getAccountCard() {
-        return accountCard;
+    public ClientConnectionManager getConnectionManager() {
+        return connectionManager;
     }
 }

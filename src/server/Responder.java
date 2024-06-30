@@ -6,18 +6,26 @@ import common.util.Serializer;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
-import static server.Server.getBuffer;
-
 public class Responder {
-    private static final Serializer<Response> responseSerializer = new Serializer<>();
+    private final Serializer<Response> responseSerializer = new Serializer<>();
+    private Server parent;
 
-    public static void respondToClient(CustomPair<DatagramChannel, InetSocketAddress> clientData, Response response) throws IOException {
+    public Responder(Server parent) {
+        this.parent = parent;
+    }
+
+    public void respondToClient(CustomPair<DatagramChannel, InetSocketAddress> clientData, Response response) throws IOException {
         getBuffer().put(responseSerializer.serialize(response));
         getBuffer().flip();
         clientData.getFirst().send(getBuffer(), clientData.getSecond());
         getBuffer().clear();
+    }
+
+    private ByteBuffer getBuffer() {
+        return parent.getConnectionManager().getBuffer();
     }
 
 

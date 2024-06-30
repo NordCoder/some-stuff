@@ -2,6 +2,7 @@ package server;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -9,15 +10,22 @@ import java.util.Iterator;
 
 public class ConnectionManager {
     private static final int PORT = 12345;
-    private static Selector selector;
-    private static DatagramChannel channel;
+    private Selector selector;
+    private DatagramChannel channel;
+    private ByteBuffer buffer;
 
-    public ConnectionManager() throws IOException {
-        selector = Selector.open();
-        channel = DatagramChannel.open();
-        channel.bind(new InetSocketAddress(PORT));
-        channel.configureBlocking(false);
-        channel.register(selector, SelectionKey.OP_READ);
+
+    public ConnectionManager() {
+        try {
+            selector = Selector.open();
+            channel = DatagramChannel.open();
+            channel.bind(new InetSocketAddress(PORT));
+            channel.configureBlocking(false);
+            channel.register(selector, SelectionKey.OP_READ);
+            buffer = ByteBuffer.allocate(8192);
+        } catch (IOException e) {
+            System.out.println("failed to start server connection: " + e.getMessage());
+        }
     }
 
     public SelectionKey getNextSelectionKey() throws IOException {
@@ -26,5 +34,13 @@ public class ConnectionManager {
         SelectionKey key = iterator.next();
         iterator.remove();
         return key;
+    }
+
+    public ByteBuffer getBuffer() {
+        return buffer;
+    }
+
+    public DatagramChannel getChannel() {
+        return channel;
     }
 }
