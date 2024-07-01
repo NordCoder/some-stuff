@@ -8,7 +8,6 @@ import common.util.Serializer;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 
@@ -17,33 +16,41 @@ import static common.util.Util.handleLoginCommand;
 
 public class QueryHandler {
     private final Serializer<CustomPair<Command, Request>> commandSerializer = new Serializer<>();
-    private final Server parent;
+    private final ServerConnectionManager connectionManager;
 
-    public QueryHandler(Server parent) {
-        this.parent = parent;
+    public QueryHandler(ServerConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
     }
 
-    public Response executeCommandFromBuffer() {
+    public Response executeCommandFromBuffer(Receiver receiver) {
         try {
-            getBuffer().flip();
-            CustomPair<Command, Request> command = commandSerializer.deserialize(getBuffer().array());
-            command.getSecond().setReceiver(parent.getReceiver());
-            Response response = command.getFirst().execute(command.getSecond());
-            System.out.println("executed command: " + command.getFirst());
-            getBuffer().clear();
-            return response;
+            CustomPair<Command, Request> command = readPrepareCommandFromBuffer(receiver);
+            return executeCommand(command);
         } catch (Exception e) {
             System.out.println("failed to execute command: " + e.getMessage());
             return new Response("failed to execute command: " + e.getMessage());
         }
+    }
 
+    private CustomPair<Command, Request> readPrepareCommandFromBuffer(Receiver receiver) throws IOException, ClassNotFoundException {
+        connectionManager.flipBuffer();
+        CustomPair<Command, Request> command = commandSerializer.deserialize(connectionManager.getByteArray());
+        connectionManager.clearBuffer();
+        command.getSecond().setReceiver(receiver);
+        return command;
+    }
+
+    private Response executeCommand(CustomPair<Command, Request> command) {
+        Response response = command.getFirst().execute(command.getSecond());
+        System.out.println("executed command: " + command.getFirst());
+        return response;
     }
 
     public CustomPair<DatagramChannel, InetSocketAddress> getClientDataAndFillBuffer(SelectionKey key) {
         try {
+            connectionManager.clearBuffer();
             DatagramChannel dataChannel = (DatagramChannel) key.channel();
-            getBuffer().clear();
-            InetSocketAddress clientAddress = (InetSocketAddress) dataChannel.receive(getBuffer());
+            InetSocketAddress clientAddress = connectionManager.receiveResponseOnChannel(dataChannel);
             return new CustomPair<>(dataChannel, clientAddress);
         } catch (IOException e) {
             System.out.println("failed to recieve command: " + e.getMessage());
@@ -52,13 +59,9 @@ public class QueryHandler {
 
     }
 
-    private ByteBuffer getBuffer() {
-        return parent.getConnectionManager().getBuffer();
-    }
-
     public void handleServerConsoleCommand(CustomPair<Command, Request> command) {
         Response response = command.getFirst().execute(command.getSecond());
-        handleLoginCommand(response, parent.getAccountCard());
+        handleLoginCommand(response, command.getSecond().getCard());
         System.out.println(response.getText());
     }
 }

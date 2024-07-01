@@ -4,32 +4,44 @@ import common.commands.Command;
 import common.commands.Request;
 import common.input.ConsoleInputGetter;
 import common.input.InputParser;
+import common.util.AccountCard;
 import common.util.CustomPair;
 import common.util.Serializer;
 
-import java.util.List;
+import java.io.IOException;
+import java.util.NoSuchElementException;
 
 import static common.util.Util.*;
 
 public class CommandSender {
     private final InputParser inputParser = new InputParser(new ConsoleInputGetter(), getClientCommands());
     private final Serializer<CustomPair<Command, Request>> commandSerializer = new Serializer<>();
-    private final Client parent;
+    private final ClientConnectionManager connectionManager;
 
-    public CommandSender(Client parent) {
-        this.parent = parent;
+    public CommandSender(ClientConnectionManager parent) {
+        this.connectionManager = parent;
     }
 
-    public void sendCommand(CustomPair<Command, Request> command) throws Exception {
-        parent.getConnectionManager().getBuffer().put(commandSerializer.serialize(command));
-        parent.getConnectionManager().getBuffer().flip();
-        parent.getConnectionManager().getChannel().send(parent.getConnectionManager().getBuffer(), parent.getConnectionManager().getAddress());
-        parent.getConnectionManager().getBuffer().clear();
+    public void sendNextCommand(AccountCard card) throws NoSuchElementException {
+        try {
+            sendCommand(readHandleCommand(inputParser, card));
+        } catch (NoSuchElementException e) {
+            throw new NoSuchElementException();
+        } catch (Exception e) {
+            System.out.println("unable to send command: " + e.getMessage());
+        }
+
     }
 
-    public void sendNextCommand() throws Exception {
-        sendCommand(readHandleCommand(inputParser, parent.getAccountCard()));
+    public void sendCommand(CustomPair<Command, Request> command) {
+        try {
+            connectionManager.fillBuffer(commandSerializer.serialize(command));
+            connectionManager.flipBuffer();
+            connectionManager.send();
+            connectionManager.clearBuffer();
+        } catch (IOException e) {
+            System.out.println("unable to send command: " + e.getMessage());
+        }
+
     }
-
-
 }

@@ -6,11 +6,9 @@ import common.commands.Response;
 import common.input.ConsoleInputGetter;
 import common.input.InputParser;
 import common.util.AccountCard;
-import common.util.BadInputException;
 import common.util.CustomPair;
 import server.db.DatabaseConnection;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
@@ -22,14 +20,12 @@ import static common.util.Util.*;
 import static server.db.DatabaseOperations.getAllWorkersFromDB;
 
 public class Server {
-    private ConnectionManager connectionManager;
+    private ServerConnectionManager connectionManager;
     private QueryHandler queryHandler;
     private Responder responder;
 
-
     private Receiver receiver;
     private AccountCard accountCard;
-
 
     private ExecutorService connectionThreadPool;
     private ExecutorService queryThreadPool;
@@ -43,9 +39,9 @@ public class Server {
 
     private void init() {
         initCollection();
-        connectionManager = new ConnectionManager();
-        queryHandler = new QueryHandler(this);
-        responder = new Responder(this);
+        connectionManager = new ServerConnectionManager();
+        queryHandler = new QueryHandler(connectionManager);
+        responder = new Responder(connectionManager);
         accountCard = new AccountCard();
 
         connectionThreadPool = Executors.newCachedThreadPool();
@@ -55,41 +51,23 @@ public class Server {
 
     private void runServer() {
         while (true) {
-            Future<SelectionKey> futureKey = connectionThreadPool.submit(new Callable<SelectionKey>() {
-                @Override
-                public SelectionKey call() throws IOException {
-                    return connectionManager.getNextSelectionKey();
-                }
+            Future<SelectionKey> futureKey = connectionThreadPool.submit(() -> connectionManager.getNextSelectionKey());
+            Future<CustomPair<CustomPair<DatagramChannel, InetSocketAddress>, Response>> queryExecutorData = queryThreadPool.submit(() -> {
+                CustomPair<DatagramChannel, InetSocketAddress> clientData = queryHandler.getClientDataAndFillBuffer(getFutureData(futureKey));
+                Response response = queryHandler.executeCommandFromBuffer(receiver);
+                return new CustomPair<>(clientData, response);
             });
-            Future<CustomPair<CustomPair<DatagramChannel, InetSocketAddress>, Response>> futureData =
-                    queryThreadPool.submit(new Callable<CustomPair<CustomPair<DatagramChannel, InetSocketAddress>, Response>>() {
-                        @Override
-                        public CustomPair<CustomPair<DatagramChannel, InetSocketAddress>, Response> call() {
-                            SelectionKey key = null;
-                            try {
-                                key = futureKey.get();
-                            } catch (InterruptedException e) {
-                                System.out.println("interrupted exception, can't get key");
-                            } catch (ExecutionException e) {
-                                System.out.println("execution exception, can't get key");
-                            }
-                            CustomPair<DatagramChannel, InetSocketAddress> clientData = queryHandler.getClientDataAndFillBuffer(key);
-                            Response response = queryHandler.executeCommandFromBuffer();
-                            return new CustomPair<>(clientData, response);
-                        }
-                    });
-            CustomPair<CustomPair<DatagramChannel, InetSocketAddress>, Response> queryExecutorData = null;
-            try {
-                queryExecutorData = futureData.get();
-            } catch (InterruptedException e) {
-                System.out.println("interrupted exception, can't get key");
-            } catch (ExecutionException e) {
-                System.out.println("execution exception, can't get key");
-            }
-            if (queryExecutorData != null) {
-                CustomPair<CustomPair<DatagramChannel, InetSocketAddress>, Response> finalQueryExecutorData = queryExecutorData;
-                responderThreadPool.submit(() -> responder.respondToClient(finalQueryExecutorData.getFirst(), finalQueryExecutorData.getSecond()));
-            }
+            CustomPair<CustomPair<DatagramChannel, InetSocketAddress>, Response> clientDataAndResponse = getFutureData(queryExecutorData);
+            responderThreadPool.submit(() -> responder.respondToClient(clientDataAndResponse.getFirst(), clientDataAndResponse.getSecond()));
+        }
+    }
+
+    private <T> T getFutureData(Future<T> future) {
+        try {
+            return future.get();
+        } catch (ExecutionException | InterruptedException e) {
+            System.out.println("multithread exception, can't get data: " + e.getMessage());
+            return null;
         }
     }
 
@@ -119,25 +97,11 @@ public class Server {
                 CustomPair<Command, Request> command = readHandleCommand(commandParser, accountCard);
                 command.getSecond().setReceiver(receiver);
                 queryHandler.handleServerConsoleCommand(command);
-            } catch (BadInputException e) {
-                System.out.println(e.getMessage());
             } catch (NoSuchElementException e) {
                 break;
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
         }
-    }
-
-    public ConnectionManager getConnectionManager() {
-        return connectionManager;
-    }
-
-    public Receiver getReceiver() {
-        return receiver;
-    }
-
-    public AccountCard getAccountCard() {
-        return accountCard;
     }
 }

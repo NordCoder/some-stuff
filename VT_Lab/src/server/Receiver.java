@@ -2,6 +2,7 @@ package server;
 
 import common.commands.Command;
 import common.commands.Request;
+import common.commands.Response;
 import common.entity.Person;
 import common.entity.Worker;
 import common.input.FileInputGetter;
@@ -11,7 +12,6 @@ import common.util.CustomPair;
 import server.db.DatabaseConnection;
 import server.db.DatabaseOperations;
 
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -27,10 +27,8 @@ import static server.db.DatabaseOperations.insertWorkerSql;
 
 public class Receiver { // used for collection management and command execution
     private Set<Worker> collection;
-    private ZonedDateTime creationDate;
-    private ArrayList<Command> commandsHistory;
-    private InputParser scriptParser = null;
-    private AccountCard accountCard;
+    private final ZonedDateTime creationDate;
+    private final ArrayList<Command> commandsHistory;
 
     public Receiver() {
         this.collection = Collections.synchronizedSet(new TreeSet<>(Comparator.comparingDouble(Worker::getId)));
@@ -38,11 +36,14 @@ public class Receiver { // used for collection management and command execution
         creationDate = ZonedDateTime.now();
     }
 
-    public boolean addWorker(Worker worker, int userId) throws SQLException {
-        Connection connection = DatabaseConnection.getConnection();
-        int id = insertWorkerSql(connection, worker, userId);
-        worker.setId(id);
-        return collection.add(worker);
+    public Response addWorker(Worker worker, int userId) {
+        try {
+            int id = insertWorkerSql(DatabaseConnection.getConnection(), worker, userId);
+            worker.setId(id);
+            return new Response(collection.add(worker) ? "added!" : "already exists!");
+        } catch (SQLException e) {
+            return new Response("failed to add worker: " + e.getMessage());
+        }
     }
 
     public double getMaximumValue() {
@@ -70,7 +71,7 @@ public class Receiver { // used for collection management and command execution
     public String getHistory() {
         return commandsHistory.stream()
                 .limit(14)
-                .map(Command::getHelpName)
+                .map(Command::getCommandName)
                 .collect(Collectors.joining(System.lineSeparator()));
     }
 
@@ -104,17 +105,22 @@ public class Receiver { // used for collection management and command execution
                 .collect(Collectors.joining(System.lineSeparator()));
     }
 
-    public boolean removeAnyByPerson(Person person, AccountCard card) throws Exception {
-        for (Worker w : collection) {
-            if (w.getPerson().compareTo(person) == 0) {
-                if (allowedToChangeById(card, w.getId())) {
-                    DatabaseOperations.deleteWorkerSql(DatabaseConnection.getConnection(), w.getId());
-                    collection.remove(w);
-                    return true;
+    public Response removeAnyByPerson(Person person, AccountCard card) {
+        try {
+            for (Worker w : collection) {
+                if (w.getPerson().compareTo(person) == 0) {
+                    if (allowedToChangeById(card, w.getId())) {
+                        DatabaseOperations.deleteWorkerSql(DatabaseConnection.getConnection(), w.getId());
+                        collection.remove(w);
+                        return new Response("removed!");
+                    }
                 }
             }
+            return new Response("worker with such person not found!");
+        } catch (Exception e) {
+            return new Response("failed to remove worker with such person: " + e.getMessage());
         }
-        return false;
+
     }
 
     public boolean removeWorkerById(Integer id) throws SQLException {
@@ -122,13 +128,13 @@ public class Receiver { // used for collection management and command execution
         long size = collection.size();
         collection = collection
                 .stream()
-                .filter(worker -> worker.getId() != id)
+                .filter(worker -> !Objects.equals(worker.getId(), id))
                 .collect(Collectors.toCollection(TreeSet::new));
         return size != collection.size();
     }
 
     public boolean executeScript(String filePath, AccountCard card) {
-        scriptParser = new InputParser(new FileInputGetter(filePath), getClientCommands());
+        InputParser scriptParser = new InputParser(new FileInputGetter(filePath), getClientCommands());
         while (scriptParser.hasNextLine()) {
             try {
                 CustomPair<Command, Request> command = readHandleCommand(scriptParser, card);
@@ -139,7 +145,6 @@ public class Receiver { // used for collection management and command execution
                 return false;
             }
         }
-        scriptParser = null;
         return true;
     }
 
@@ -153,27 +158,18 @@ public class Receiver { // used for collection management and command execution
         return getClientCommands()
                 .values()
                 .stream()
-                .map(command -> (command.getHelpName() + ": " + command.getHelpText()))
+                .map(command -> (command.getCommandName() + ": " + command.getCommandDescription()))
                 .collect(Collectors.joining(System.lineSeparator()));
     }
 
-    public void clear() throws SQLException {
-        DatabaseOperations.clearDataBase(DatabaseConnection.getConnection());
-    }
+    public Response clear()  {
+        try {
+            DatabaseOperations.clearDataBase(DatabaseConnection.getConnection());
+            setCollection(new TreeSet<>(Comparator.comparingDouble(Worker::countToCompare)));
+            return new Response("successfully cleared!");
+        } catch (SQLException e) {
+            return new Response("failed to clear: " + e.getMessage());
+        }
 
-    private long generateId() {
-        return System.currentTimeMillis();
-    }
-
-    public void setCreationDate(ZonedDateTime creationDate) {
-        this.creationDate = creationDate;
-    }
-
-    public ZonedDateTime getCreationDate() {
-        return creationDate;
-    }
-
-    public ArrayList<Command> getCommandsHistory() {
-        return commandsHistory;
     }
 }

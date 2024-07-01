@@ -10,34 +10,29 @@ import java.util.List;
 import static common.util.Util.allowedToChangeById;
 import static common.util.Util.checkAuthorization;
 
-public class UpdateById implements SpecialCommand {
+public class UpdateById extends AbstractNeedToRegisterCommand implements SpecialCommand {
     private Worker worker;
     @Override
-    public Response execute(Request request) {
-        if (!checkAuthorization(request.getCard())) {
-            return new Response("Log in to update records");
-        }
+    public Response executeCommand(Request request) {
         try {
             int id = Integer.parseInt(request.getArgs().get(0));
             if (!allowedToChangeById(request.getCard(), id)) {
                 return new Response("you are not allowed to update this element");
             }
             request.getReceiver().replaceWorkerById(id, worker, request.getCard().getUserId());
-            request.getReceiver().addCommandHistoryRecord(this);
             return new Response("done");
         } catch (Exception e) {
             return new Response(e.getMessage());
         }
     }
 
-
     @Override
-    public String getHelpText() {
+    public String getCommandDescription() {
         return "обновить значение элемента коллекции, id которого равен заданному";
     }
 
     @Override
-    public String getHelpName() {
+    public String getCommandName() {
         return "update id {element}";
     }
 

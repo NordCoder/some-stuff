@@ -4,21 +4,24 @@ import server.Receiver;
 
 import java.util.List;
 
-public class PrintAscending implements Command {
+public class PrintAscending extends AbstractCommand {
     @Override
-    public Response execute(Request request) {
+    public Response executeCommand(Request request) {
         String workers = request.getReceiver().getAscending();
-        request.getReceiver().addCommandHistoryRecord(this);
         return new Response(workers);
     }
 
     @Override
-    public String getHelpText() {
+    protected void allowedToExecute(Request request) {
+    }
+
+    @Override
+    public String getCommandDescription() {
         return "вывести элементы коллекции в порядке возрастания";
     }
 
     @Override
-    public String getHelpName() {
+    public String getCommandName() {
         return "print_ascending";
     }
 }

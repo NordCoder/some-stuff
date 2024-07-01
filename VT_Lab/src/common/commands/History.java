@@ -4,21 +4,24 @@ import server.Receiver;
 
 import java.util.List;
 
-public class History implements Command {
+public class History extends AbstractCommand {
     @Override
-    public Response execute(Request request) {
+    public Response executeCommand(Request request) {
         String history = request.getReceiver().getHistory();
-        request.getReceiver().addCommandHistoryRecord(this);
         return new Response(history);
     }
 
     @Override
-    public String getHelpText() {
+    protected void allowedToExecute(Request request) {
+    }
+
+    @Override
+    public String getCommandDescription() {
         return "вывести последние 14 команд (без их аргументов)";
     }
 
     @Override
-    public String getHelpName() {
+    public String getCommandName() {
         return "history";
     }
 }
