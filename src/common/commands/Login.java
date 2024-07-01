@@ -10,9 +10,9 @@ import static common.util.LoggingIn.EXISTS;
 import static common.util.Util.generateSHA512Hash;
 import static server.db.DatabaseOperations.authenticateUserCheck;
 
-public class Login implements Command {
+public class Login extends AbstractCommand {
     @Override
-    public Response execute(Request request) {
+    public Response executeCommand(Request request) {
         try (Connection connection = DatabaseConnection.getConnection()) {
             LoggingIn accountExists = authenticateUserCheck(connection, request.getArgs().get(0), generateSHA512Hash(request.getArgs().get(1)));
             Response response = new Response(accountExists == EXISTS ? "Successfully logged in" : "Invalid username or password");
@@ -24,12 +24,16 @@ public class Login implements Command {
     }
 
     @Override
-    public String getHelpText() {
+    protected void allowedToExecute(Request request) {
+    }
+
+    @Override
+    public String getCommandDescription() {
         return "log in the system";
     }
 
     @Override
-    public String getHelpName() {
+    public String getCommandName() {
         return "login";
     }
 }

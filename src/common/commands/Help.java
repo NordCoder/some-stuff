@@ -4,21 +4,24 @@ import server.Receiver;
 
 import java.util.List;
 
-public class Help implements Command {
+public class Help extends AbstractCommand {
     @Override
-    public Response execute(Request request) {
+    protected Response executeCommand(Request request) {
         String help = request.getReceiver().getHelp();
-        request.getReceiver().addCommandHistoryRecord(this);
         return new Response(help);
     }
 
     @Override
-    public String getHelpText() {
+    protected void allowedToExecute(Request request) {
+    }
+
+    @Override
+    public String getCommandDescription() {
         return "вывести справку по доступным командам";
     }
 
     @Override
-    public String getHelpName() {
+    public String getCommandName() {
         return "help";
     }
 }

@@ -10,32 +10,21 @@ import java.util.List;
 
 import static common.util.Util.checkAuthorization;
 
-public class RemoveAnyByPerson implements SpecialCommand {
+public class RemoveAnyByPerson extends AbstractNeedToRegisterCommand implements SpecialCommand {
     private Person person;
+
     @Override
-    public Response execute(Request request) {
-        if (!checkAuthorization(request.getCard())) {
-            return new Response("Log in to remove");
-        }
-        try {
-            boolean check = request.getReceiver().removeAnyByPerson(person, request.getCard());
-            request.getReceiver().addCommandHistoryRecord(this);
-            return new Response(check ? "done" : "there's no worker with such person or you are not allowed to delete");
-        } catch (SQLException e) {
-            return new Response("failed to remove worker from database: " + e.getMessage());
-        } catch (Exception e) {
-            return new Response(e.getMessage());
-        }
+    public Response executeCommand(Request request) {
+        return request.getReceiver().removeAnyByPerson(person, request.getCard());
     }
 
-
     @Override
-    public String getHelpText() {
+    public String getCommandDescription() {
         return "удалить из коллекции один элемент, значение поля person которого эквивалентно заданному";
     }
 
     @Override
-    public String getHelpName() {
+    public String getCommandName() {
         return "remove_any_by_person person";
     }
 
