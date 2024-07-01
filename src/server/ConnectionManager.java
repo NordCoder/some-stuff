@@ -28,12 +28,17 @@ public class ConnectionManager {
         }
     }
 
-    public SelectionKey getNextSelectionKey() throws IOException {
-        selector.select();
-        Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
-        SelectionKey key = iterator.next();
-        iterator.remove();
-        return key;
+    public SelectionKey getNextSelectionKey() {
+        try {
+            selector.select();
+            Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+            SelectionKey key = iterator.next();
+            iterator.remove();
+            return key;
+        } catch (IOException e) {
+            System.out.println("failed to select key: " + e.getMessage());
+            return null;
+        }
     }
 
     public ByteBuffer getBuffer() {

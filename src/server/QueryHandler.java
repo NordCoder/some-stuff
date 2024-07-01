@@ -23,21 +23,33 @@ public class QueryHandler {
         this.parent = parent;
     }
 
-    public Response executeCommandFromBuffer() throws IOException, ClassNotFoundException {
-        getBuffer().flip();
-        CustomPair<Command, Request> command = commandSerializer.deserialize(getBuffer().array());
-        command.getSecond().setReceiver(parent.getReceiver());
-        Response response = command.getFirst().execute(command.getSecond());
-        System.out.println("executed command: " + command.getFirst());
-        getBuffer().clear();
-        return response;
+    public Response executeCommandFromBuffer() {
+        try {
+            getBuffer().flip();
+            CustomPair<Command, Request> command = commandSerializer.deserialize(getBuffer().array());
+            command.getSecond().setReceiver(parent.getReceiver());
+            Response response = command.getFirst().execute(command.getSecond());
+            System.out.println("executed command: " + command.getFirst());
+            getBuffer().clear();
+            return response;
+        } catch (Exception e) {
+            System.out.println("failed to execute command: " + e.getMessage());
+            return new Response("failed to execute command: " + e.getMessage());
+        }
+
     }
 
-    public CustomPair<DatagramChannel, InetSocketAddress> getClientDataAndFillBuffer(SelectionKey key) throws IOException {
-        DatagramChannel dataChannel = (DatagramChannel) key.channel();
-        getBuffer().clear();
-        InetSocketAddress clientAddress = (InetSocketAddress) dataChannel.receive(getBuffer());
-        return new CustomPair<>(dataChannel, clientAddress);
+    public CustomPair<DatagramChannel, InetSocketAddress> getClientDataAndFillBuffer(SelectionKey key) {
+        try {
+            DatagramChannel dataChannel = (DatagramChannel) key.channel();
+            getBuffer().clear();
+            InetSocketAddress clientAddress = (InetSocketAddress) dataChannel.receive(getBuffer());
+            return new CustomPair<>(dataChannel, clientAddress);
+        } catch (IOException e) {
+            System.out.println("failed to recieve command: " + e.getMessage());
+            return null;
+        }
+
     }
 
     private ByteBuffer getBuffer() {

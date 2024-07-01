@@ -26,14 +26,14 @@ import static server.db.DatabaseOperations.insertWorkerSql;
 // todo fix execute script
 
 public class Receiver { // used for collection management and command execution
-    private TreeSet<Worker> collection;
+    private Set<Worker> collection;
     private ZonedDateTime creationDate;
     private ArrayList<Command> commandsHistory;
     private InputParser scriptParser = null;
     private AccountCard accountCard;
 
     public Receiver() {
-        this.collection = new TreeSet<>(Comparator.comparingDouble(Worker::getId));
+        this.collection = Collections.synchronizedSet(new TreeSet<>(Comparator.comparingDouble(Worker::getId)));
         this.commandsHistory = new ArrayList<>();
         creationDate = ZonedDateTime.now();
     }
@@ -55,11 +55,11 @@ public class Receiver { // used for collection management and command execution
         return minWorker.map(Worker::countToCompare).orElse(Double.MAX_VALUE);
     }
 
-    public TreeSet<Worker> getCollection() {
+    public Set<Worker> getCollection() {
         return collection;
     }
 
-    public void setCollection(TreeSet<Worker> collection) {
+    public void setCollection(Set<Worker> collection) {
         this.collection = collection;
     }
 

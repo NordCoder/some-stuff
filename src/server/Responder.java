@@ -17,11 +17,15 @@ public class Responder {
         this.parent = parent;
     }
 
-    public void respondToClient(CustomPair<DatagramChannel, InetSocketAddress> clientData, Response response) throws IOException {
-        getBuffer().put(responseSerializer.serialize(response));
-        getBuffer().flip();
-        clientData.getFirst().send(getBuffer(), clientData.getSecond());
-        getBuffer().clear();
+    public void respondToClient(CustomPair<DatagramChannel, InetSocketAddress> clientData, Response response) {
+        try {
+            getBuffer().put(responseSerializer.serialize(response));
+            getBuffer().flip();
+            clientData.getFirst().send(getBuffer(), clientData.getSecond());
+            getBuffer().clear();
+        } catch (IOException e) {
+            System.out.println("failed to send response to client: " + e.getMessage());
+        }
     }
 
     private ByteBuffer getBuffer() {

@@ -7,6 +7,9 @@ import static client.ResponseReceiver.LoggingIn.*;
 import static common.util.Util.mapRowToWorker;
 
 import java.sql.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Set;
 import java.util.TreeSet;
 
 
@@ -46,9 +49,9 @@ public class DatabaseOperations {
             }
     }
 
-    public static TreeSet<Worker> getAllWorkersFromDB(Connection connection) throws SQLException {
+    public static Set<Worker> getAllWorkersFromDB(Connection connection) throws SQLException {
         String sql = "SELECT * FROM workers";
-        TreeSet<Worker> result = new TreeSet<>();
+        Set<Worker> result = Collections.synchronizedSet(new TreeSet<>(Comparator.comparingDouble(Worker::getId)));
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             try (ResultSet resultSet = statement.executeQuery()) {
