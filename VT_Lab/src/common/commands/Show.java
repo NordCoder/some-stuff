@@ -1,15 +1,19 @@
 package common.commands;
 
+import common.util.AccountCard;
 import server.Receiver;
 
 import java.util.List;
 
 public class Show implements Command{
     @Override
-    public Response execute(Receiver receiver, List<String> args) {
-        String workers = receiver.show();
-        receiver.addCommandHistoryRecord(this);
-        return new Response(workers);
+    public Response execute(Request request) {
+        String result = "You are " + (request.getCard().getStatus() == AccountCard.Authorization.AUTHORIZED ?
+                request.getCard().getUsername() :
+                "unauthorized") + System.lineSeparator();
+        result += request.getReceiver().show();
+        request.getReceiver().addCommandHistoryRecord(this);
+        return new Response(result);
     }
 
     @Override

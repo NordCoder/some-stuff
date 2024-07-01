@@ -4,15 +4,28 @@ import common.entity.Person;
 import common.entity.Worker;
 import server.Receiver;
 
+import java.lang.module.ResolutionException;
+import java.sql.SQLException;
 import java.util.List;
+
+import static common.util.Util.checkAuthorization;
 
 public class RemoveAnyByPerson implements SpecialCommand {
     private Person person;
     @Override
-    public Response execute(Receiver receiver, List<String> args) {
-        boolean check = receiver.removeAnyByPerson(person);
-        receiver.addCommandHistoryRecord(this);
-        return new Response(check ? "done" : "there's no worker with such person");
+    public Response execute(Request request) {
+        if (!checkAuthorization(request.getCard())) {
+            return new Response("Log in to remove");
+        }
+        try {
+            boolean check = request.getReceiver().removeAnyByPerson(person, request.getCard());
+            request.getReceiver().addCommandHistoryRecord(this);
+            return new Response(check ? "done" : "there's no worker with such person or you are not allowed to delete");
+        } catch (SQLException e) {
+            return new Response("failed to remove worker from database: " + e.getMessage());
+        } catch (Exception e) {
+            return new Response(e.getMessage());
+        }
     }
 
 

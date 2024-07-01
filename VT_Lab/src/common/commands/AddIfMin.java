@@ -6,14 +6,23 @@ import server.Receiver;
 
 import java.util.List;
 
+import static common.util.Util.checkAuthorization;
+
 public class AddIfMin implements SpecialCommand {
     private Worker worker = null;
     @Override
-    public Response execute(Receiver receiver, List<String> args) {
-        receiver.addCommandHistoryRecord(this);
-        if (worker.countToCompare() < receiver.getMinimumValue()) {
-            receiver.addWorker(worker);
-            return new Response("done");
+    public Response execute(Request request) {
+        if (!checkAuthorization(request.getCard())) {
+            return new Response("Log in to create records");
+        }
+        request.getReceiver().addCommandHistoryRecord(this);
+        if (worker.countToCompare() < request.getReceiver().getMinimumValue()) {
+            try {
+                request.getReceiver().addWorker(worker, request.getCard().getUserId());
+                return new Response("done");
+            } catch (Exception e) {
+                return new Response("error: " + e.getMessage());
+            }
         }
         return new Response("too big");
     }

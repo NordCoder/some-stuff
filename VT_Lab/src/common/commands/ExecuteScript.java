@@ -4,11 +4,16 @@ import server.Receiver;
 
 import java.util.List;
 
+import static common.util.Util.checkAuthorization;
+
 public class ExecuteScript implements Command {
     @Override
-    public Response execute(Receiver receiver, List<String> args) {
-        boolean check = receiver.executeScript(args.get(0));
-        receiver.addCommandHistoryRecord(this);
+    public Response execute(Request request) {
+        if (!checkAuthorization(request.getCard())) {
+            return new Response("Log in to execute script");
+        }
+        boolean check = request.getReceiver().executeScript(request.getArgs().get(0), request.getCard());
+        request.getReceiver().addCommandHistoryRecord(this);
         return new Response(check ? "Executed!" : "bad script");
     }
 

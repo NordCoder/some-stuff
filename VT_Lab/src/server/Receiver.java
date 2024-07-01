@@ -1,18 +1,24 @@
 package server;
 
 import common.commands.Command;
+import common.commands.Request;
 import common.entity.Person;
 import common.entity.Worker;
 import common.input.FileInputGetter;
 import common.input.InputParser;
+import common.util.AccountCard;
 import common.util.CustomPair;
+import server.db.DatabaseConnection;
+import server.db.DatabaseOperations;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static common.util.Util.*;
-import static server.Saving.saveToJsonStatic;
+import static server.db.DatabaseOperations.insertWorkerSql;
 
 // treeset comparing value is id, worker comparator is also id-based
 // but to compare workers for commands function countToCompare is used
@@ -20,22 +26,22 @@ import static server.Saving.saveToJsonStatic;
 // todo fix execute script
 
 public class Receiver { // used for collection management and command execution
-    private TreeSet<Worker> collection;
+    private Set<Worker> collection;
     private ZonedDateTime creationDate;
     private ArrayList<Command> commandsHistory;
     private InputParser scriptParser = null;
+    private AccountCard accountCard;
 
     public Receiver() {
-        this.collection = new TreeSet<>(Comparator.comparingDouble(Worker::getId));
+        this.collection = Collections.synchronizedSet(new TreeSet<>(Comparator.comparingDouble(Worker::getId)));
         this.commandsHistory = new ArrayList<>();
         creationDate = ZonedDateTime.now();
     }
 
-    public boolean addWorker(Worker worker) {
-        if (worker.getId() == null) {
-            long id = generateId();
-            worker.setId(id);
-        }
+    public boolean addWorker(Worker worker, int userId) throws SQLException {
+        Connection connection = DatabaseConnection.getConnection();
+        int id = insertWorkerSql(connection, worker, userId);
+        worker.setId(id);
         return collection.add(worker);
     }
 
@@ -49,11 +55,11 @@ public class Receiver { // used for collection management and command execution
         return minWorker.map(Worker::countToCompare).orElse(Double.MAX_VALUE);
     }
 
-    public TreeSet<Worker> getCollection() {
+    public Set<Worker> getCollection() {
         return collection;
     }
 
-    public void setCollection(TreeSet<Worker> collection) {
+    public void setCollection(Set<Worker> collection) {
         this.collection = collection;
     }
 
@@ -77,7 +83,7 @@ public class Receiver { // used for collection management and command execution
     }
 
     public String show() {
-        return collection
+        return collection.isEmpty() ? "collection's empty" : collection
                 .stream()
                 .sorted(Comparator.comparingDouble(Worker::getCoordinatesCompareValue))
                 .map(Worker::toString)
@@ -98,17 +104,21 @@ public class Receiver { // used for collection management and command execution
                 .collect(Collectors.joining(System.lineSeparator()));
     }
 
-    public boolean removeAnyByPerson(Person person) {
+    public boolean removeAnyByPerson(Person person, AccountCard card) throws Exception {
         for (Worker w : collection) {
             if (w.getPerson().compareTo(person) == 0) {
-                collection.remove(w);
-                return true;
+                if (allowedToChangeById(card, w.getId())) {
+                    DatabaseOperations.deleteWorkerSql(DatabaseConnection.getConnection(), w.getId());
+                    collection.remove(w);
+                    return true;
+                }
             }
         }
         return false;
     }
 
-    public boolean removeWorkerById(long id) {
+    public boolean removeWorkerById(Integer id) throws SQLException {
+        DatabaseOperations.deleteWorkerSql(DatabaseConnection.getConnection(), id);
         long size = collection.size();
         collection = collection
                 .stream()
@@ -117,17 +127,13 @@ public class Receiver { // used for collection management and command execution
         return size != collection.size();
     }
 
-    public boolean saveToJson() {
-        return saveToJsonStatic(this);
-    }
-
-    public boolean executeScript(String filePath) {
+    public boolean executeScript(String filePath, AccountCard card) {
         scriptParser = new InputParser(new FileInputGetter(filePath), getClientCommands());
         while (scriptParser.hasNextLine()) {
             try {
-                CustomPair<Command, String[]> command = scriptParser.nextCommand();
-                handleCommandsWithAdditionalInfo(command.getFirst(), scriptParser);
-                command.getFirst().execute(this, Arrays.asList(command.getSecond()));
+                CustomPair<Command, Request> command = readHandleCommand(scriptParser, card);
+                command.getSecond().setReceiver(this);
+                command.getFirst().execute(command.getSecond());
             } catch (Exception e) {
                 System.out.println(e.getMessage());
                 return false;
@@ -137,10 +143,10 @@ public class Receiver { // used for collection management and command execution
         return true;
     }
 
-    public void replaceWorkerById(long id, Worker toAdd) {
+    public void replaceWorkerById(Integer id, Worker toAdd, int userId) throws SQLException {
         removeWorkerById(id);
         toAdd.setId(id);
-        addWorker(toAdd);
+        addWorker(toAdd, userId);
     }
 
     public String getHelp() {
@@ -149,6 +155,10 @@ public class Receiver { // used for collection management and command execution
                 .stream()
                 .map(command -> (command.getHelpName() + ": " + command.getHelpText()))
                 .collect(Collectors.joining(System.lineSeparator()));
+    }
+
+    public void clear() throws SQLException {
+        DatabaseOperations.clearDataBase(DatabaseConnection.getConnection());
     }
 
     private long generateId() {

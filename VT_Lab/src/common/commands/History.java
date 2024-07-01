@@ -6,9 +6,9 @@ import java.util.List;
 
 public class History implements Command {
     @Override
-    public Response execute(Receiver receiver, List<String> args) {
-        String history = receiver.getHistory();
-        receiver.addCommandHistoryRecord(this);
+    public Response execute(Request request) {
+        String history = request.getReceiver().getHistory();
+        request.getReceiver().addCommandHistoryRecord(this);
         return new Response(history);
     }
 

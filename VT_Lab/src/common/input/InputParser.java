@@ -7,9 +7,7 @@ import common.util.CustomPair;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static common.util.Consts.Predicates.*;
@@ -23,7 +21,7 @@ public class InputParser {
         this.inputGetter = inputGetter;
     }
 
-    public CustomPair<Command, String[]> nextCommand() throws Exception {
+    public CustomPair<Command, List<String>> nextCommand() throws Exception {
         String[] command = inputGetter.getNextLine().split("\\s+");
         String commandName = command[0];
         if (commandName.equals("exit")) {
@@ -34,7 +32,7 @@ public class InputParser {
         if (commandObj == null) {
             throw new Exception("There's no command named " + commandName);
         } else {
-            return new CustomPair<>(commandObj, args);
+            return new CustomPair<>(commandObj, Arrays.stream(args).toList());
         }
     }
 
@@ -106,6 +104,13 @@ public class InputParser {
         Color color = readColor();
         Country country = readCountry();
         return new Person(height, weight, color, country);
+    }
+
+    public List<String> readUsernamePassword() throws Exception {
+        ArrayList<String> res = new ArrayList<>();
+        res.add(readOneData("Enter username: ", true, "string", "must be longer than 2 symbols", alwaysTrue, longerThanTwo));
+        res.add(readOneData("Enter password: ", true, "string", "must be longer than 5 symbols", alwaysTrue, longerThanFive));
+        return res;
     }
 
     private Coordinates readCoordinates() throws Exception {

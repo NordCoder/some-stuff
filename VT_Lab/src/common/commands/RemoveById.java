@@ -4,16 +4,25 @@ import server.Receiver;
 
 import java.util.List;
 
+import static common.util.Util.allowedToChangeById;
+import static common.util.Util.checkAuthorization;
+
 public class RemoveById implements Command {
     @Override
-    public Response execute(Receiver receiver, List<String> args) {
+    public Response execute(Request request) {
+        if (!checkAuthorization(request.getCard())) {
+            return new Response("Log in to delete records");
+        }
         try {
-            long id = Long.parseLong(args.get(0));
-            boolean check = receiver.removeWorkerById(id);
-            receiver.addCommandHistoryRecord(this);
+            Integer id = Integer.parseInt(request.getArgs().get(0));
+            if (!allowedToChangeById(request.getCard(), id)) {
+                return new Response("you are not allowed to delete this record");
+            }
+            boolean check = request.getReceiver().removeWorkerById(id);
+            request.getReceiver().addCommandHistoryRecord(this);
             return new Response(check ? "done!" : "there's no worker with id " + id);
         } catch (Exception e) {
-            return new Response("id must be a number");
+            return new Response(e.getMessage());
         }
     }
 
