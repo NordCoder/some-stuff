@@ -27,10 +27,8 @@ import static server.db.DatabaseOperations.insertWorkerSql;
 
 public class Receiver { // used for collection management and command execution
     private Set<Worker> collection;
-    private ZonedDateTime creationDate;
-    private ArrayList<Command> commandsHistory;
-    private InputParser scriptParser = null;
-    private AccountCard accountCard;
+    private final ZonedDateTime creationDate;
+    private final ArrayList<Command> commandsHistory;
 
     public Receiver() {
         this.collection = Collections.synchronizedSet(new TreeSet<>(Comparator.comparingDouble(Worker::getId)));
@@ -122,13 +120,13 @@ public class Receiver { // used for collection management and command execution
         long size = collection.size();
         collection = collection
                 .stream()
-                .filter(worker -> worker.getId() != id)
+                .filter(worker -> !Objects.equals(worker.getId(), id))
                 .collect(Collectors.toCollection(TreeSet::new));
         return size != collection.size();
     }
 
     public boolean executeScript(String filePath, AccountCard card) {
-        scriptParser = new InputParser(new FileInputGetter(filePath), getClientCommands());
+        InputParser scriptParser = new InputParser(new FileInputGetter(filePath), getClientCommands());
         while (scriptParser.hasNextLine()) {
             try {
                 CustomPair<Command, Request> command = readHandleCommand(scriptParser, card);
@@ -139,7 +137,6 @@ public class Receiver { // used for collection management and command execution
                 return false;
             }
         }
-        scriptParser = null;
         return true;
     }
 
@@ -159,21 +156,5 @@ public class Receiver { // used for collection management and command execution
 
     public void clear() throws SQLException {
         DatabaseOperations.clearDataBase(DatabaseConnection.getConnection());
-    }
-
-    private long generateId() {
-        return System.currentTimeMillis();
-    }
-
-    public void setCreationDate(ZonedDateTime creationDate) {
-        this.creationDate = creationDate;
-    }
-
-    public ZonedDateTime getCreationDate() {
-        return creationDate;
-    }
-
-    public ArrayList<Command> getCommandsHistory() {
-        return commandsHistory;
     }
 }

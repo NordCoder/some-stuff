@@ -1,6 +1,5 @@
 package common.util;
 
-import client.ResponseReceiver;
 import common.commands.*;
 import common.entity.*;
 import common.input.ConsoleInputGetter;
@@ -89,14 +88,14 @@ public class Util {
     }
 
     public static void handleLoginCommand(Response response, AccountCard card) {
-        if (response.getLoginVerificationFlag() == ResponseReceiver.LoggingIn.EXISTS) {
+        if (response.getLoginVerificationFlag() == LoggingIn.EXISTS) {
             try {
                 card.setUserId(DatabaseOperations.getUserIdByUsername(DatabaseConnection.getConnection(), card.getUsername()));
                 card.setStatus(AccountCard.Authorization.AUTHORIZED);
             } catch (SQLException e) {
                 System.out.println(e.getMessage());
             }
-        } else if (response.getLoginVerificationFlag() == ResponseReceiver.LoggingIn.DOES_NOT_EXIST) {
+        } else if (response.getLoginVerificationFlag() == LoggingIn.DOES_NOT_EXIST) {
             card.setUsername("");
             card.setStatus(AccountCard.Authorization.UNAUTHORIZED);
             card.setUserId(-1);
@@ -126,9 +125,6 @@ public class Util {
         return card.getStatus() == AccountCard.Authorization.AUTHORIZED;
     }
 
-    public static boolean allowedToChangeByWorker(AccountCard card, Worker w) throws Exception {
-        return allowedToChangeById(card, w.getId());
-    }
 
     public static boolean allowedToChangeById(AccountCard card, int id) throws Exception {
         try {

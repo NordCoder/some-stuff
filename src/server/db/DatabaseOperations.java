@@ -1,9 +1,10 @@
 package server.db;
 
-import client.ResponseReceiver;
 import common.entity.*;
 
-import static client.ResponseReceiver.LoggingIn.*;
+import static common.util.LoggingIn.DOES_NOT_EXIST;
+import static common.util.LoggingIn.EXISTS;
+import common.util.LoggingIn;
 import static common.util.Util.mapRowToWorker;
 
 import java.sql.*;
@@ -37,7 +38,7 @@ public class DatabaseOperations {
         }
     }
 
-    public static ResponseReceiver.LoggingIn authenticateUserCheck(Connection connection, String login, String passwordHash) throws SQLException {
+    public static LoggingIn authenticateUserCheck(Connection connection, String login, String passwordHash) throws SQLException {
             String query = "SELECT * FROM users WHERE username = ? AND password_hash = ?";
             try (PreparedStatement stmt = connection.prepareStatement(query)) {
                 stmt.setString(1, login);
@@ -125,10 +126,6 @@ public class DatabaseOperations {
                 throw new SQLException("user not found");
             }
         }
-    }
-
-    public static int getUserIdByWorker(Connection connection, Worker worker) throws SQLException {
-       return getUserIdByWorkerId(connection, worker.getId());
     }
 
     public static int getUserIdByWorkerId(Connection connection, int id) throws SQLException {

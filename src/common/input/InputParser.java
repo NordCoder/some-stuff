@@ -52,14 +52,6 @@ public class InputParser {
         }
     }
 
-    public void writeMessageAboutWrongInput(String type, String additionalPredicate) {
-        if (Objects.equals(additionalPredicate, "")) {
-            System.out.println("Invalid input. Input must be: " + type);
-        } else {
-            System.out.println("Invalid input. Input must be: " + type + " and " + additionalPredicate);
-        }
-    }
-
     public String readOneData(String query, boolean necessary, String type, String additionalPredicate, Predicate<String> typeCheck, Predicate<String> additionalCondition) throws Exception {
         while (true) {
             printIfNotFile(query);
@@ -77,6 +69,14 @@ public class InputParser {
                     throw new Exception("wrong script input");
                 }
             }
+        }
+    }
+
+    public void writeMessageAboutWrongInput(String type, String additionalPredicate) {
+        if (Objects.equals(additionalPredicate, "")) {
+            System.out.println("Invalid input. Input must be: " + type);
+        } else {
+            System.out.println("Invalid input. Input must be: " + type + " and " + additionalPredicate);
         }
     }
 

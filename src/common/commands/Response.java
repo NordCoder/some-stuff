@@ -1,12 +1,12 @@
 package common.commands;
 
-import client.ResponseReceiver;
+import common.util.LoggingIn;
 
 import java.io.Serializable;
 
 public class Response implements Serializable {
     private String text;
-    private ResponseReceiver.LoggingIn loginStatus = ResponseReceiver.LoggingIn.NOT_USED;
+    private LoggingIn loginStatus = LoggingIn.NOT_USED;
 
     public Response(String text) {
         this.text = text;
@@ -20,11 +20,11 @@ public class Response implements Serializable {
         this.text = text;
     }
 
-    public ResponseReceiver.LoggingIn getLoginVerificationFlag() {
+    public LoggingIn getLoginVerificationFlag() {
         return loginStatus;
     }
 
-    public void setLoginStatus(ResponseReceiver.LoggingIn loginStatus) {
+    public void setLoginStatus(LoggingIn loginStatus) {
         this.loginStatus = loginStatus;
     }
 }

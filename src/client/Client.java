@@ -1,9 +1,11 @@
 package client;
 
+import common.commands.Response;
 import common.util.AccountCard;
-import common.util.BadInputException;
 
 import java.util.NoSuchElementException;
+
+import static common.util.Util.handleLoginCommand;
 
 public class Client {
     private final AccountCard accountCard;
@@ -13,9 +15,9 @@ public class Client {
 
     public Client() {
         this.accountCard = new AccountCard();
-        this.connectionManager = new ClientConnectionManager(this);
-        this.sender = new CommandSender(this);
-        this.responseReceiver = new ResponseReceiver(this);
+        this.connectionManager = new ClientConnectionManager();
+        this.sender = new CommandSender(connectionManager);
+        this.responseReceiver = new ResponseReceiver(connectionManager);
 
         runMainLoop();
     }
@@ -24,23 +26,16 @@ public class Client {
         while (true) {
             System.out.print(">>>");
             try {
-                sender.sendNextCommand();
-                responseReceiver.handleResponse(responseReceiver.getResponse());
-            } catch (BadInputException e) {
-                System.out.println(e.getMessage());
+                sender.sendNextCommand(accountCard);
+                handleResponse(responseReceiver.getResponse());
             } catch (NoSuchElementException e) {
                 break;
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
             }
         }
     }
 
-    public AccountCard getAccountCard() {
-        return accountCard;
-    }
-
-    public ClientConnectionManager getConnectionManager() {
-        return connectionManager;
+    public void handleResponse(Response response) {
+        handleLoginCommand(response, accountCard);
+        System.out.println(response.getText());
     }
 }

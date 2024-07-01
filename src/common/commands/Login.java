@@ -1,14 +1,14 @@
 package common.commands;
 
+import common.util.LoggingIn;
 import server.db.DatabaseConnection;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import static common.util.LoggingIn.EXISTS;
 import static common.util.Util.generateSHA512Hash;
 import static server.db.DatabaseOperations.authenticateUserCheck;
-import static client.ResponseReceiver.LoggingIn.*;
-import client.ResponseReceiver.LoggingIn;
 
 public class Login implements Command {
     @Override

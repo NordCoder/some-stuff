@@ -1,5 +1,7 @@
 package server;
 
+import common.AbstractConnectionManager;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -8,23 +10,27 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.Iterator;
 
-public class ConnectionManager {
-    private static final int PORT = 12345;
+import static server.ServerConsts.BUFFER_SIZE;
+import static server.ServerConsts.LISTENING_PORT;
+
+public class ServerConnectionManager extends AbstractConnectionManager {
     private Selector selector;
-    private DatagramChannel channel;
-    private ByteBuffer buffer;
 
 
-    public ConnectionManager() {
+    public ServerConnectionManager() {
+        startServer();
+    }
+
+    private void startServer() {
         try {
             selector = Selector.open();
             channel = DatagramChannel.open();
-            channel.bind(new InetSocketAddress(PORT));
+            channel.bind(new InetSocketAddress(LISTENING_PORT));
             channel.configureBlocking(false);
             channel.register(selector, SelectionKey.OP_READ);
-            buffer = ByteBuffer.allocate(8192);
+            buffer = ByteBuffer.allocate(BUFFER_SIZE);
         } catch (IOException e) {
-            System.out.println("failed to start server connection: " + e.getMessage());
+            System.out.println("failed to start server: " + e.getMessage());
         }
     }
 
@@ -41,11 +47,11 @@ public class ConnectionManager {
         }
     }
 
-    public ByteBuffer getBuffer() {
-        return buffer;
+    public void sendOnChannelAndAddress(DatagramChannel channel, InetSocketAddress address) throws IOException {
+        channel.send(buffer, address);
     }
 
-    public DatagramChannel getChannel() {
-        return channel;
+    public InetSocketAddress receiveResponseOnChannel(DatagramChannel ch) throws IOException {
+        return (InetSocketAddress) ch.receive(buffer);
     }
 }
