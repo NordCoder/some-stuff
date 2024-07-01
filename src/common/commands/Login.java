@@ -1,6 +1,5 @@
 package common.commands;
 
-import client.ResponseReceiver;
 import server.db.DatabaseConnection;
 
 import java.sql.Connection;
@@ -12,17 +11,16 @@ import static client.ResponseReceiver.LoggingIn.*;
 import client.ResponseReceiver.LoggingIn;
 
 public class Login implements Command {
-
     @Override
     public Response execute(Request request) {
         try (Connection connection = DatabaseConnection.getConnection()) {
             LoggingIn accountExists = authenticateUserCheck(connection, request.getArgs().get(0), generateSHA512Hash(request.getArgs().get(1)));
             Response response = new Response(accountExists == EXISTS ? "Successfully logged in" : "Invalid username or password");
             response.setLoginStatus(accountExists);
+            return response;
         } catch (SQLException e) {
             return new Response(e.getMessage());
         }
-        return null;
     }
 
     @Override

@@ -6,10 +6,10 @@ import common.util.BadInputException;
 import java.util.NoSuchElementException;
 
 public class Client {
-    private AccountCard accountCard;
-    private ClientConnectionManager connectionManager;
-    private CommandSender sender;
-    private ResponseReceiver responseReceiver;
+    private final AccountCard accountCard;
+    private final ClientConnectionManager connectionManager;
+    private final CommandSender sender;
+    private final ResponseReceiver responseReceiver;
 
     public Client() {
         this.accountCard = new AccountCard();

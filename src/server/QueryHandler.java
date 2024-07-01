@@ -12,10 +12,12 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 
+import static common.util.Util.handleLoginCommand;
+
 
 public class QueryHandler {
-    private Serializer<CustomPair<Command, Request>> commandSerializer = new Serializer<>();
-    private Server parent;
+    private final Serializer<CustomPair<Command, Request>> commandSerializer = new Serializer<>();
+    private final Server parent;
 
     public QueryHandler(Server parent) {
         this.parent = parent;
@@ -40,5 +42,11 @@ public class QueryHandler {
 
     private ByteBuffer getBuffer() {
         return parent.getConnectionManager().getBuffer();
+    }
+
+    public void handleServerConsoleCommand(CustomPair<Command, Request> command) {
+        Response response = command.getFirst().execute(command.getSecond());
+        handleLoginCommand(response, parent.getAccountCard());
+        System.out.println(response.getText());
     }
 }

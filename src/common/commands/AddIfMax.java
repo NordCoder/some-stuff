@@ -6,14 +6,23 @@ import server.Receiver;
 
 import java.util.List;
 
+import static common.util.Util.checkAuthorization;
+
 public class AddIfMax implements SpecialCommand {
     private Worker worker;
     @Override
     public Response execute(Request request) {
+        if (!checkAuthorization(request.getCard())) {
+            return new Response("Log in to create records");
+        }
         request.getReceiver().addCommandHistoryRecord(this);
         if (worker.countToCompare() > request.getReceiver().getMaximumValue()) {
-            request.getReceiver().addWorker(worker);
-            return new Response("done");
+            try {
+                request.getReceiver().addWorker(worker, request.getCard().getUserId());
+                return new Response("done");
+            } catch (Exception e) {
+                return new Response("error: " + e.getMessage());
+            }
         }
         return new Response("too small :(");
     }

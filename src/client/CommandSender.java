@@ -12,9 +12,9 @@ import java.util.List;
 import static common.util.Util.*;
 
 public class CommandSender {
-    private InputParser inputParser = new InputParser(new ConsoleInputGetter(), getClientCommands());
-    private Serializer<CustomPair<Command, Request>> commandSerializer = new Serializer<>();
-    private Client parent;
+    private final InputParser inputParser = new InputParser(new ConsoleInputGetter(), getClientCommands());
+    private final Serializer<CustomPair<Command, Request>> commandSerializer = new Serializer<>();
+    private final Client parent;
 
     public CommandSender(Client parent) {
         this.parent = parent;

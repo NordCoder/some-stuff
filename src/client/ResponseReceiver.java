@@ -1,19 +1,17 @@
 package client;
 
 import common.commands.Response;
-import common.util.AccountCard;
 import common.util.Serializer;
-import server.db.DatabaseConnection;
-import server.db.DatabaseOperations;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.sql.SQLException;
+
+import static common.util.Util.handleLoginCommand;
 
 
 public class ResponseReceiver {
-    private Serializer<Response> responseSerializer = new Serializer<>();
-    private Client parent;
+    private final Serializer<Response> responseSerializer = new Serializer<>();
+    private final Client parent;
 
     public ResponseReceiver(Client parent) {
         this.parent = parent;
@@ -45,18 +43,7 @@ public class ResponseReceiver {
     }
 
     public void handleResponse(Response response) {
-        if (response.getLoginVerificationFlag() == LoggingIn.EXISTS) {
-            try {
-                parent.getAccountCard().setUserId(DatabaseOperations.getUserIdByUsername(DatabaseConnection.getConnection(), parent.getAccountCard().getUsername()));
-                parent.getAccountCard().setStatus(AccountCard.Authorization.AUTHORIZED);
-            } catch (SQLException e) {
-                System.out.println(e.getMessage());
-            }
-        } else if (response.getLoginVerificationFlag() == LoggingIn.DOES_NOT_EXIST) {
-            parent.getAccountCard().setUsername("");
-            parent.getAccountCard().setStatus(AccountCard.Authorization.UNAUTHORIZED);
-            parent.getAccountCard().setUserId(-1);
-        }
+        handleLoginCommand(response, parent.getAccountCard());
         System.out.println(response.getText());
     }
 }
