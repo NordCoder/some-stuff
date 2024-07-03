@@ -11,9 +11,9 @@ import static common.util.Util.generateSHA512Hash;
 public class Register extends AbstractCommand {
     @Override
     public Response executeCommand(Request request) {
-        try (Connection connection = DatabaseConnection.getConnection()) {
+        try {
             String passwordHash = generateSHA512Hash(request.getArgs().get(1));
-            DatabaseOperations.addUser(connection, request.getArgs().get(0), passwordHash);
+            DatabaseOperations.insertUser(request.getArgs().get(0), passwordHash);
         } catch (SQLException e) {
             return new Response(e.getMessage());
         }

@@ -9,13 +9,12 @@ import static common.util.Util.handleLoginCommand;
 
 public class Client {
     private final AccountCard accountCard;
-    private final ClientConnectionManager connectionManager;
     private final CommandSender sender;
     private final ResponseReceiver responseReceiver;
 
     public Client() {
         this.accountCard = new AccountCard();
-        this.connectionManager = new ClientConnectionManager();
+        ClientConnectionManager connectionManager = new ClientConnectionManager();
         this.sender = new CommandSender(connectionManager);
         this.responseReceiver = new ResponseReceiver(connectionManager);
 

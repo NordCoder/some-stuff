@@ -10,7 +10,7 @@ import java.util.List;
 import static common.util.Util.allowedToChangeById;
 import static common.util.Util.checkAuthorization;
 
-public class UpdateById extends AbstractNeedToRegisterCommand implements SpecialCommand {
+public class UpdateById extends AbstractNeedToRegisterCommand implements NeedsWorkerCommand {
     private Worker worker;
     @Override
     public Response executeCommand(Request request) {
@@ -37,17 +37,7 @@ public class UpdateById extends AbstractNeedToRegisterCommand implements Special
     }
 
     @Override
-    public void setToAdd(Worker w) {
+    public void setWorker(Worker w) {
         worker = w;
-    }
-
-    @Override
-    public void setToAdd(Person p) {
-
-    }
-
-    @Override
-    public boolean needsWorker() {
-        return true;
     }
 }

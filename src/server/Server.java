@@ -12,7 +12,6 @@ import server.db.DatabaseConnection;
 import java.net.InetSocketAddress;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
-import java.sql.SQLException;
 import java.util.NoSuchElementException;
 import java.util.concurrent.*;
 
@@ -74,8 +73,8 @@ public class Server {
     private void initCollection() {
         receiver = new Receiver();
         try {
-            receiver.setCollection(getAllWorkersFromDB(DatabaseConnection.getConnection()));
-        } catch (SQLException e) {
+            receiver.setCollection(getAllWorkersFromDB());
+        } catch (Exception e) {
             System.out.println("failed to load data from database: " + e.getMessage());
         }
     }
@@ -103,5 +102,9 @@ public class Server {
                 System.out.println(e.getMessage());
             }
         }
+    }
+
+    public Receiver getReceiver() {
+        return receiver;
     }
 }

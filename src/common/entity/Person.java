@@ -44,19 +44,12 @@ public class Person implements Comparable<Person>, Serializable {
         return Double.compare(count_to_compare(), o.count_to_compare());
     }
 
-    public Integer getHeight() {
-        return height;
-    }
-
-    public Double getWeight() {
-        return weight;
-    }
-
-    public Color getHairColor() {
-        return hairColor;
-    }
-
-    public Country getNationality() {
-        return nationality;
+    public Object[] getObjects() {
+        return new Object[] {
+                height,
+                weight,
+                hairColor != null ? hairColor.name() : null,
+                nationality.name()
+        };
     }
 }

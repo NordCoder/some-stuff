@@ -13,8 +13,8 @@ import static server.db.DatabaseOperations.authenticateUserCheck;
 public class Login extends AbstractCommand {
     @Override
     public Response executeCommand(Request request) {
-        try (Connection connection = DatabaseConnection.getConnection()) {
-            LoggingIn accountExists = authenticateUserCheck(connection, request.getArgs().get(0), generateSHA512Hash(request.getArgs().get(1)));
+        try {
+            LoggingIn accountExists = authenticateUserCheck(request.getArgs().get(0), generateSHA512Hash(request.getArgs().get(1)));
             Response response = new Response(accountExists == EXISTS ? "Successfully logged in" : "Invalid username or password");
             response.setLoginStatus(accountExists);
             return response;
