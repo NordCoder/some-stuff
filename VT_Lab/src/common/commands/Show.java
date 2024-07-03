@@ -10,7 +10,7 @@ public class Show extends AbstractCommand{
     public Response executeCommand(Request request) {
         String result = "You are " + (request.getCard().getStatus() == AccountCard.Authorization.AUTHORIZED ?
                 request.getCard().getUsername() :
-                "unauthorized") + System.lineSeparator();
+                "unauthorized") + request.getCard().getUserId() + System.lineSeparator();
         result += request.getReceiver().show();
         return new Response(result);
     }

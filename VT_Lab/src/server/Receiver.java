@@ -9,7 +9,6 @@ import common.input.FileInputGetter;
 import common.input.InputParser;
 import common.util.AccountCard;
 import common.util.CustomPair;
-import server.db.DatabaseConnection;
 import server.db.DatabaseOperations;
 
 import java.sql.SQLException;
@@ -38,7 +37,7 @@ public class Receiver { // used for collection management and command execution
 
     public Response addWorker(Worker worker, int userId) {
         try {
-            int id = insertWorkerSql(DatabaseConnection.getConnection(), worker, userId);
+            int id = insertWorkerSql(worker, userId);
             worker.setId(id);
             return new Response(collection.add(worker) ? "added!" : "already exists!");
         } catch (SQLException e) {
@@ -110,7 +109,7 @@ public class Receiver { // used for collection management and command execution
             for (Worker w : collection) {
                 if (w.getPerson().compareTo(person) == 0) {
                     if (allowedToChangeById(card, w.getId())) {
-                        DatabaseOperations.deleteWorkerSql(DatabaseConnection.getConnection(), w.getId());
+                        DatabaseOperations.deleteWorkerSql(w.getId());
                         collection.remove(w);
                         return new Response("removed!");
                     }
@@ -124,7 +123,7 @@ public class Receiver { // used for collection management and command execution
     }
 
     public boolean removeWorkerById(Integer id) throws SQLException {
-        DatabaseOperations.deleteWorkerSql(DatabaseConnection.getConnection(), id);
+        DatabaseOperations.deleteWorkerSql(id);
         long size = collection.size();
         collection = collection
                 .stream()
@@ -164,12 +163,15 @@ public class Receiver { // used for collection management and command execution
 
     public Response clear()  {
         try {
-            DatabaseOperations.clearDataBase(DatabaseConnection.getConnection());
+            DatabaseOperations.clearDataBase();
             setCollection(new TreeSet<>(Comparator.comparingDouble(Worker::countToCompare)));
             return new Response("successfully cleared!");
-        } catch (SQLException e) {
+        } catch (Exception e) {
             return new Response("failed to clear: " + e.getMessage());
         }
+    }
 
+    public int size() {
+        return collection.size();
     }
 }

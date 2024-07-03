@@ -1,8 +1,12 @@
 package common.entity;
 
 import java.io.Serializable;
+import java.sql.Date;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import static server.db.DatabaseOperations.getCoordinatesById;
+import static server.db.DatabaseOperations.getPersonById;
 
 public class Worker implements Comparable<Worker>, Serializable {
     private Integer id; //Поле не может быть null, Значение поля должно быть больше 0, Значение этого поля должно быть уникальным, Значение этого поля должно генерироваться автоматически
@@ -80,34 +84,20 @@ public class Worker implements Comparable<Worker>, Serializable {
                 ", totalValue=" + countToCompare() +
                 '}';
     }
-
-
-    public String getName() {
-        return name;
-    }
-
     public Coordinates getCoordinates() {
         return coordinates;
     }
 
-    public LocalDateTime getCreationDate() {
-        return creationDate;
-    }
-
-    public double getSalary() {
-        return salary;
-    }
-
-    public LocalDate getEndDate() {
-        return endDate;
-    }
-
-    public Position getPosition() {
-        return position;
-    }
-
-    public Status getStatus() {
-        return status;
+    public Object[] getObjects(int coordsId, int personId, int userId) {
+        return new Object[] { name,
+                coordsId,
+                salary,
+                endDate != null ? Date.valueOf(endDate) : null,
+                position.name(),
+                status != null ? status.name() : null,
+                personId,
+                userId
+        };
     }
 }
 

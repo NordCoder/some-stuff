@@ -5,7 +5,7 @@ import common.entity.Worker;
 
 import static common.util.Util.checkAuthorization;
 
-public class AddIfMax extends AbstractNeedToRegisterCommand implements SpecialCommand {
+public class AddIfMax extends AbstractNeedToRegisterCommand implements NeedsWorkerCommand {
     private Worker worker;
 
     @Override
@@ -27,17 +27,7 @@ public class AddIfMax extends AbstractNeedToRegisterCommand implements SpecialCo
     }
 
     @Override
-    public void setToAdd(Worker w) {
+    public void setWorker(Worker w) {
         worker = w;
-    }
-
-    @Override
-    public void setToAdd(Person p) {
-
-    }
-
-    @Override
-    public boolean needsWorker() {
-        return true;
     }
 }

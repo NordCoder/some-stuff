@@ -4,7 +4,6 @@ import common.commands.*;
 import common.entity.*;
 import common.input.ConsoleInputGetter;
 import common.input.InputParser;
-import server.db.DatabaseConnection;
 import server.db.DatabaseOperations;
 
 import java.math.BigInteger;
@@ -50,12 +49,10 @@ public class Util {
 
 
     public static void handleCommandsWithAdditionalInfo(CustomPair<Command, Request> command, InputParser parser) throws Exception {
-        if (command.getFirst() instanceof SpecialCommand) {
-            if (((SpecialCommand) command.getFirst()).needsWorker()) {
-                ((SpecialCommand) command.getFirst()).setToAdd(parser.readWorker());
-            } else {
-                ((SpecialCommand) command.getFirst()).setToAdd(parser.readPerson());
-            }
+        if (command.getFirst() instanceof NeedsWorkerCommand) {
+            ((NeedsWorkerCommand) command.getFirst()).setWorker(parser.readWorker());
+        } else if (command.getFirst() instanceof NeedsPersonCommand) {
+            ((NeedsPersonCommand) command.getFirst()).setPerson(parser.readPerson());
         } else if (command.getFirst() instanceof Register) {
             command.getSecond().setArgs(parser.readUsernamePassword());
         } else if (command.getFirst() instanceof Login) {
@@ -90,7 +87,7 @@ public class Util {
     public static void handleLoginCommand(Response response, AccountCard card) {
         if (response.getLoginVerificationFlag() == LoggingIn.EXISTS) {
             try {
-                card.setUserId(DatabaseOperations.getUserIdByUsername(DatabaseConnection.getConnection(), card.getUsername()));
+                card.setUserId(DatabaseOperations.getUserIdByUsername(card.getUsername()));
                 card.setStatus(AccountCard.Authorization.AUTHORIZED);
             } catch (SQLException e) {
                 System.out.println(e.getMessage());
@@ -113,8 +110,8 @@ public class Util {
         Status status = Status.valueOf(resultSet.getString("status"));
         int personId = resultSet.getInt("person_id");
 
-        Coordinates coordinates = getCoordinatesById(DatabaseConnection.getConnection(), coordinatesId);
-        Person person = getPersonById(DatabaseConnection.getConnection(), personId);
+        Coordinates coordinates = getCoordinatesById(coordinatesId);
+        Person person = getPersonById(personId);
 
         Worker toRet = new Worker(name, coordinates, creationDate, salary, endDate, position, status, person);
         toRet.setId(id);
@@ -128,10 +125,10 @@ public class Util {
 
     public static boolean allowedToChangeById(AccountCard card, int id) throws Exception {
         try {
-            if (isSuperuser(DatabaseConnection.getConnection(), card.getUserId())) {
+            if (isSuperuser(card.getUserId())) {
                 return true;
             } else {
-                return card.getUserId() == getUserIdByWorkerId(DatabaseConnection.getConnection(), id);
+                return card.getUserId() == getUserIdByWorkerId(id);
             }
         } catch (SQLException e) {
             throw new Exception("failed to check if change is allowed");

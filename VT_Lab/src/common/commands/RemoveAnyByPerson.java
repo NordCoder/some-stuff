@@ -10,7 +10,7 @@ import java.util.List;
 
 import static common.util.Util.checkAuthorization;
 
-public class RemoveAnyByPerson extends AbstractNeedToRegisterCommand implements SpecialCommand {
+public class RemoveAnyByPerson extends AbstractNeedToRegisterCommand implements NeedsPersonCommand {
     private Person person;
 
     @Override
@@ -29,17 +29,7 @@ public class RemoveAnyByPerson extends AbstractNeedToRegisterCommand implements 
     }
 
     @Override
-    public void setToAdd(Worker w) {
-
-    }
-
-    @Override
-    public void setToAdd(Person p) {
-        person = p;
-    }
-
-    @Override
-    public boolean needsWorker() {
-        return false;
+    public void setPerson(Person p) {
+        this.person = p;
     }
 }

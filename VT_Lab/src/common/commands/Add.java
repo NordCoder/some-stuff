@@ -3,7 +3,7 @@ package common.commands;
 import common.entity.Person;
 import common.entity.Worker;
 
-public class Add extends AbstractNeedToRegisterCommand implements SpecialCommand {
+public class Add extends AbstractNeedToRegisterCommand implements NeedsWorkerCommand {
     private Worker worker = null;
     @Override
     protected Response executeCommand(Request request) {
@@ -21,17 +21,8 @@ public class Add extends AbstractNeedToRegisterCommand implements SpecialCommand
     }
 
     @Override
-    public void setToAdd(Worker w) {
+    public void setWorker(Worker w) {
         worker = w;
     }
 
-    @Override
-    public void setToAdd(Person p) {
-
-    }
-
-    @Override
-    public boolean needsWorker() {
-        return true;
-    }
 }
